@@ -130,7 +130,7 @@ fun <T> HMDraggableList(
     var prevTargetedDropIndex by remember { mutableStateOf<Int?>(null) }
 
     // 자동 스크롤 속도
-    var desiredVelocity by remember { mutableFloatStateOf(0f) }
+    var autoScrollVelocity by remember { mutableFloatStateOf(0f) }
 
     // 마지막 드래그 Y 좌표
     var lastDragY by remember { mutableStateOf<Float?>(null) }
@@ -148,7 +148,7 @@ fun <T> HMDraggableList(
     val dndState = rememberDragAndDropListState(lazyListState = listState) { _, _ ->
         val y = lastDragY
         if (y == null) {
-            desiredVelocity = 0f
+            autoScrollVelocity = 0f
             return@rememberDragAndDropListState
         }
         val viewportStart = listState.layoutInfo.viewportStartOffset.toFloat()
@@ -161,7 +161,7 @@ fun <T> HMDraggableList(
         val scrollThresholdPx = with(density) { SCROLL_THRESHOLD_DP.toPx() }
         val headerThresholdPx = with(density) { HEADER_THRESHOLD_DP.toPx() }
 
-        desiredVelocity = when {
+        autoScrollVelocity = when {
             toTop < (scrollThresholdPx + headerThresholdPx) -> -SCROLL_VELOCITY
             toBottom < scrollThresholdPx -> SCROLL_VELOCITY
             else -> 0f
@@ -181,14 +181,14 @@ fun <T> HMDraggableList(
                 lastTime = now
                 dt
             }
-            val v = desiredVelocity
+            val v = autoScrollVelocity
             if (v != 0f && dtNanos > 0L) {
                 val dtSec = dtNanos / 1_000_000_000f
                 val delta = v * dtSec
                 val consumed = listState.scrollBy(delta)
                 // 스크롤 끝에 도달하면 속도 리셋
                 if (abs(consumed) < 0.5f) {
-                    desiredVelocity = 0f
+                    autoScrollVelocity = 0f
                 }
             }
         }
@@ -290,14 +290,14 @@ fun <T> HMDraggableList(
                         }
 
                         override fun onExited(event: DragAndDropEvent) {
-                            desiredVelocity = 0f
+                            autoScrollVelocity = 0f
                             lastDragY = null
                             targetedDropIndex = null
                             draggingItemId = null
                         }
 
                         override fun onEnded(event: DragAndDropEvent) {
-                            desiredVelocity = 0f
+                            autoScrollVelocity = 0f
                             lastDragY = null
                             dndState.onDragInterrupted()
                             targetedDropIndex = null
