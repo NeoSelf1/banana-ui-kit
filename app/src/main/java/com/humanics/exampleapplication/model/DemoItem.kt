@@ -8,11 +8,11 @@ package com.humanics.exampleapplication.model
  * 이 데모에서는 리스트 인덱스에 의존하고 있어 서버 동기화 시 추가 작업이 필요함
  */
 data class DemoItem(
-    val id: Int,
+    override val id: Int,
     val title: String,
     val subtitle: String,
     val iconLetter: String = title.firstOrNull()?.uppercase() ?: "?"
-)
+) : Draggable
 
 /**
  * 샘플 데이터 생성

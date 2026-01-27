@@ -158,30 +158,22 @@ fun HMDraggableListDemoView() {
 
             // [개선] 콜백 기반 아키텍처
             // ViewModel로 쉽게 이동 가능
-            onReorder = {
-                reorderCount++
-                println("Reorder completed. Total reorders: $reorderCount")
+            onReorder = { item, targetIndex ->
+                val currentIndex = items.indexOfFirst { it.id == item.id }
+                if (currentIndex != -1 && currentIndex != targetIndex) {
+                    val mutableList = items.toMutableList()
+                    val movedItem = mutableList.removeAt(currentIndex)
+                    mutableList.add(targetIndex, movedItem)
+                    items = mutableList
+                    reorderCount++
+                    println("Moved ${item.title} from $currentIndex to $targetIndex")
+                }
             },
 
             onTapRow = { item ->
                 lastTappedItem = item
                 println("Tapped: ${item.title}")
             },
-
-            onMoveItem = { item, targetIndex ->
-                // [개선] 이동 로직이 외부로 분리됨
-                val currentIndex = items.indexOfFirst { it.id == item.id }
-                if (currentIndex != -1 && currentIndex != targetIndex) {
-                    val mutableList = items.toMutableList()
-                    val movedItem = mutableList.removeAt(currentIndex)
-                    val insertIndex = if (targetIndex > currentIndex) targetIndex - 1 else targetIndex
-                    mutableList.add(insertIndex, movedItem)
-                    items = mutableList
-                    println("Moved ${item.title} from $currentIndex to $insertIndex")
-                }
-            },
-
-            getItemId = { it.id },
 
             // [개선] 아이템 컨텐츠 - isDragging 파라미터로 시각적 피드백
             itemContent = { item, isDragging ->

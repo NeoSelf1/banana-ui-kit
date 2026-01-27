@@ -80,9 +80,14 @@ fun DragAndDropDemoView() {
         isDragEnabled = true,
 
         // iOS: onReorder: (() -> Void)?
-        onReorder = {
-            // 재정렬 완료 시 호출
-            // 실제 사용 시 서버 동기화 등 처리
+        onReorder = { item, targetIndex ->
+            val currentIndex = items.indexOfFirst { it.id == item.id }
+            if (currentIndex != -1 && currentIndex != targetIndex) {
+                val mutableList = items.toMutableList()
+                val movedItem = mutableList.removeAt(currentIndex)
+                mutableList.add(targetIndex, movedItem)
+                items = mutableList
+            }
         },
 
         // iOS: onTapRow: @escaping (Item) -> Void
@@ -90,23 +95,6 @@ fun DragAndDropDemoView() {
             // 탭 시 처리
             println("Tapped: ${item.title}")
         },
-
-        // Android 전용: 아이템 이동 콜백
-        // iOS는 Binding으로 직접 수정, Android는 콜백으로 처리
-        onMoveItem = { item, targetIndex ->
-            val currentIndex = items.indexOfFirst { it.id == item.id }
-            if (currentIndex != -1 && currentIndex != targetIndex) {
-                val mutableList = items.toMutableList()
-                val movedItem = mutableList.removeAt(currentIndex)
-                val insertIndex = if (targetIndex > currentIndex) targetIndex - 1 else targetIndex
-                mutableList.add(insertIndex, movedItem)
-                items = mutableList
-            }
-        },
-
-        // Android 전용: ID 추출 함수
-        // iOS는 Identifiable 프로토콜로 자동 처리
-        getItemId = { it.id },
 
         // iOS: @ViewBuilder itemContent: @escaping (Item, Bool) -> ItemRow
         // Bool 파라미터는 isDragging

@@ -36,6 +36,7 @@ import androidx.compose.ui.draganddrop.DragAndDropTransferData
 import androidx.compose.ui.draganddrop.mimeTypes
 import androidx.compose.ui.draganddrop.toAndroidDragEvent
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
@@ -43,6 +44,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.humanics.exampleapplication.model.Draggable
 import kotlinx.coroutines.isActive
 import kotlin.math.abs
 
@@ -84,24 +86,20 @@ import kotlin.math.abs
  * @param onReorder 아이템 재정렬 완료 시 호출되는 콜백
  * @param onTapRow 행 탭 시 호출되는 콜백
  * @param onMoveItem 아이템 이동 시 호출되는 콜백 (item, targetIndex)
- * @param getItemId 아이템의 고유 ID를 반환하는 함수
  * @param itemContent 각 아이템의 컨텐츠를 생성하는 composable (item, isDragging)
  * @param header 리스트 상단에 표시할 헤더 컴포저블
  * @param footer 리스트 하단에 표시할 푸터 컴포저블
  * @param listState LazyListState (외부에서 주입 가능)
- * @param headerOffset 헤더 높이로 인한 Y 좌표 오프셋
  * @param modifier Modifier
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun <T> HMDraggableList(
+fun <T : Draggable> HMDraggableList(
     items: List<T>,
     rowHeight: Dp,
     isDragEnabled: Boolean,
-    onReorder: () -> Unit,
+    onReorder: (T, Int) -> Unit,
     onTapRow: (T) -> Unit,
-    onMoveItem: (T, Int) -> Unit,
-    getItemId: (T) -> Int,
     itemContent: @Composable (T, Boolean) -> Unit,
     header: @Composable (() -> Unit)? = null,
     footer: @Composable (() -> Unit)? = null,
@@ -204,33 +202,39 @@ fun <T> HMDraggableList(
     // [개선] rowHeight를 활용한 중간점 계산
     // ========================================
     fun computeTargetIndex(y: Float): Int {
-        val visibleItems = listState.layoutInfo.visibleItemsInfo
-        if (visibleItems.isEmpty()) return items.size
+        val layoutInfo = listState.layoutInfo
+        val visibleItems = layoutInfo.visibleItemsInfo
+        if (visibleItems.isEmpty()) return 0
 
         // Window 좌표 → Box 로컬 좌표 변환
         val localY = y - containerTopOffset
-        // 첫 번째 아이템보다 위인 경우
-        val first = visibleItems.first()
-        val firstMid = first.offset + (first.size / 2f)
-        if (localY < firstMid) return 0
 
-        // 각 아이템의 중간점과 비교
+        // 각 아이템의 중간점과 비교하여 타겟 인덱스 결정
         for (info in visibleItems) {
             val mid = info.offset + (info.size / 2f)
             if (localY < mid) return info.index
         }
 
-        // 마지막 아이템 이후
-        val last = visibleItems.last()
-        return (last.index + 1).coerceAtMost(items.size)
+        // 모든 가시 아이템 아래에 있는 경우
+        return layoutInfo.totalItemsCount
     }
 
-    fun moveItem(item: T, targetIndex: Int) {
-        val currentIndex = items.indexOfFirst { getItemId(it) == getItemId(item) }
-        if (currentIndex == -1 || currentIndex == targetIndex) return
+    fun moveItem(item: T, targetLazyIndex: Int) {
+        val headerCount = if (header != null) 1 else 0
+        val currentIndex = items.indexOfFirst { it.id == item.id }
+        if (currentIndex == -1) return
 
-        onMoveItem(item, targetIndex)
-        onReorder()
+        // LazyIndex를 items 리스트 상대 인덱스로 변환
+        val targetItemsIndex = (targetLazyIndex - headerCount).coerceIn(0, items.size)
+
+        // 이동 후의 최종 인덱스 계산
+        // - targetItemsIndex가 currentIndex보다 크면, 아이템이 빠지면서 하나씩 당겨지므로 -1
+        // - 예: [A, B, C]에서 A(0)를 C(2) 위치로 옮기면, A 삭제([B, C]) 후 index 1에 삽입([B, A, C])
+        val insertIndex = if (targetItemsIndex > currentIndex) targetItemsIndex - 1 else targetItemsIndex
+
+        if (insertIndex == currentIndex) return
+
+        onReorder(item, insertIndex)
     }
 
     Box(
@@ -282,7 +286,7 @@ fun <T> HMDraggableList(
                             val text = event.toAndroidDragEvent().clipData
                                 ?.getItemAt(0)?.text?.toString()
                             val draggedId = text?.toIntOrNull() ?: return false
-                            val droppedItem = items.firstOrNull { getItemId(it) == draggedId }
+                            val droppedItem = items.firstOrNull { it.id == draggedId }
                                 ?: return false
 
                             val y = event.toAndroidDragEvent().y
@@ -298,20 +302,37 @@ fun <T> HMDraggableList(
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             state = listState,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {
             header?.let { item(key = "header") { it() } }
 
             // Items with drop indicators
+            // iOS HMDraggableScrollView와 동일한 로직:
+            // - 각 아이템의 위/아래에 인디케이터 표시 가능
+            // - targetedDropIndex == index: 아이템 위에 표시
+            // - targetedDropIndex == index + 1: 아이템 아래에 표시 (마지막 포함)
             itemsIndexed(
                 items = items,
-                key = { _, item -> getItemId(item) }
+                key = { _, item -> item.id }
             ) { index, item ->
-                val itemId = getItemId(item)
+                val itemId = item.id
                 val isDragging = draggingItemId == itemId
+                val isFirstItem = index == 0
+                val isLastItem = index == items.size - 1
 
                 Column(Modifier.animateItem()) {
-                    if (targetedDropIndex == index) { DropIndicator() }
+                    // 아이템 위쪽 인디케이터
+                    // [개선] targetedDropIndex(LazyColumn index)를 items 리스트 상대 인덱스로 변환
+                    val adjustedDropIndex = targetedDropIndex?.let {
+                        (it - if (header != null) 1 else 0).coerceIn(0, items.size)
+                    }
+
+                    if (adjustedDropIndex == index) {
+                        DropIndicator(
+                            isTopRounded = isFirstItem,
+                            isBottomRounded = false
+                        )
+                    }
 
                     Box(
                         modifier = Modifier
@@ -343,14 +364,13 @@ fun <T> HMDraggableList(
                     ) {
                         itemContent(item, isDragging)
                     }
-                }
-            }
 
-            // End drop indicator (마지막 아이템 뒤)
-            if (items.isNotEmpty()) {
-                item(key = "end-drop-indicator") {
-                    if (targetedDropIndex == items.size) {
-                        DropIndicator()
+                    // 아이템 아래쪽 인디케이터 (마지막 아이템 뒤 포함)
+                    if (adjustedDropIndex == index + 1) {
+                        DropIndicator(
+                            isTopRounded = false,
+                            isBottomRounded = isLastItem
+                        )
                     }
                 }
             }
@@ -362,17 +382,33 @@ fun <T> HMDraggableList(
 
 /**
  * 드롭 위치를 나타내는 인디케이터
+ *
+ * iOS HMDraggableScrollView의 UnevenRoundedRectangle과 동일한 모서리 처리:
+ * - 첫 번째 아이템 위: 상단 모서리 4dp, 하단 모서리 4dp
+ * - 마지막 아이템 아래: 상단 모서리 4dp, 하단 모서리 4dp
+ * - 중간: 상단 0dp, 하단 4dp (위쪽) / 상단 4dp, 하단 0dp (아래쪽)
+ *
+ * @param isTopRounded 상단 모서리를 둥글게 할지 여부
+ * @param isBottomRounded 하단 모서리를 둥글게 할지 여부
  */
 @Composable
-private fun DropIndicator() {
+private fun DropIndicator(
+    isTopRounded: Boolean = false,
+    isBottomRounded: Boolean = false
+) {
     Box(
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .fillMaxWidth()
             .height(12.dp)
             .background(
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
-                shape = RoundedCornerShape(2.dp)
+                color = Color.Blue,
+                shape = RoundedCornerShape(
+                    topStart = if (isTopRounded) 4.dp else 0.dp,
+                    topEnd = if (isTopRounded) 4.dp else 0.dp,
+                    bottomStart = if (isBottomRounded) 4.dp else 0.dp,
+                    bottomEnd = if (isBottomRounded) 4.dp else 0.dp
+                )
             )
     )
 }
