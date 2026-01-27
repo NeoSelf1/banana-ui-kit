@@ -30,6 +30,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
@@ -39,6 +40,8 @@ import androidx.compose.ui.draganddrop.DragAndDropTransferData
 import androidx.compose.ui.draganddrop.mimeTypes
 import androidx.compose.ui.draganddrop.toAndroidDragEvent
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -78,7 +81,6 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun DragAndDropDemoView() {
-    // 데모 아이템 리스트
     var items by remember { mutableStateOf(generateSampleItems()) }
     var isEditMode by remember { mutableStateOf(true) }
 
@@ -103,6 +105,10 @@ fun DragAndDropDemoView() {
      */
     var desiredVelocity by remember { mutableFloatStateOf(0f) }
     var lastDragY by remember { mutableStateOf<Float?>(null) }
+    // containerTopOffset: onGloballyPositioned에서 업데이트되는 원본 상태
+    var containerTopOffset by remember { mutableFloatStateOf(0f) }
+    // currentContainerTopOffset: remember 블록 내에서 최신 값을 참조하기 위한 래퍼
+    val currentContainerTopOffset by rememberUpdatedState(containerTopOffset)
     val density = LocalDensity.current
 
     /**
@@ -159,273 +165,228 @@ fun DragAndDropDemoView() {
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("DnD Demo (Legacy)") },
-                actions = {
-                    Text(
-                        text = if (isEditMode) "Edit" else "View",
-                        modifier = Modifier.padding(end = 8.dp)
-                    )
-                    Switch(
-                        checked = isEditMode,
-                        onCheckedChange = { isEditMode = it }
-                    )
-                }
-            )
-        }
-    ) { paddingValues ->
-        /**
-         * DnD 타겟 영역 (전체 Box)
-         *
-         * [문제점] Box 전체를 dragAndDropTarget으로 설정
-         * -> 각 아이템별로 설정하는 것보다 덜 정밀함
-         * -> 하지만 구현이 더 간단하고 헤더/푸터 영역도 처리 가능
-         */
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .dragAndDropTarget(
-                    shouldStartDragAndDrop = { event ->
-                        event
-                            .mimeTypes()
-                            .contains(ClipDescription.MIMETYPE_TEXT_PLAIN)
-                    },
-                    target = remember {
-                        object : DragAndDropTarget {
-                            /**
-                             * 드래그가 타겟 영역에 진입했을 때
-                             */
-                            override fun onEntered(event: DragAndDropEvent) {
-                                val y = event.toAndroidDragEvent().y
-                                lastDragY = y
-                                dndState.onDragStart(Offset(0f, y))
-                                println("onEntered: $y")
-                                targetedDropIndex = computeTargetIndex(
-                                    y = y,
-                                    listState = listState,
-                                    totalCount = items.size,
-                                    headerOffset = 0f
-                                )
+    Box(
+        modifier = Modifier
+            .onGloballyPositioned { coordinates ->
+                // Window 기준 Y 좌표 수집
+                containerTopOffset = coordinates.positionInWindow().y
+            }
+            .dragAndDropTarget(
+                shouldStartDragAndDrop = { event ->
+                    event
+                        .mimeTypes()
+                        .contains(ClipDescription.MIMETYPE_TEXT_PLAIN)
+                },
+                target = remember {
+                    object : DragAndDropTarget {
+                        override fun onEntered(event: DragAndDropEvent) {
+                            val y = event.toAndroidDragEvent().y - currentContainerTopOffset
+                            lastDragY = y
+                            dndState.onDragStart(Offset(0f, y))
+                            println("onEntered: $y")
+                            targetedDropIndex = computeTargetIndex(
+                                y = y,
+                                listState = listState,
+                                totalCount = items.size,
+                                headerOffset = 0f
+                            )
+                        }
+
+                        /**
+                         * 드래그 중 이동할 때
+                         *
+                         * [성능 문제점] 매 프레임마다 computeTargetIndex 호출
+                         * -> 리스트가 길어지면 성능 이슈 가능
+                         * -> 스로틀링이나 디바운싱 적용 고려
+                         */
+                        override fun onMoved(event: DragAndDropEvent) {
+                            val y = event.toAndroidDragEvent().y - currentContainerTopOffset
+                            val last = lastDragY
+                            if (last != null) {
+                                val dy = y - last
+                                dndState.onDrag(Offset(0f, dy))
                             }
+                            lastDragY = y
+                            println("onMoved: $y")
+                            targetedDropIndex = computeTargetIndex(
+                                y = y,
+                                listState = listState,
+                                totalCount = items.size,
+                                headerOffset = 0f
+                            )
+                        }
+
+                        /**
+                         * 드래그가 타겟 영역을 벗어났을 때
+                         */
+                        override fun onExited(event: DragAndDropEvent) {
+                            desiredVelocity = 0f
+                            lastDragY = null
+                            targetedDropIndex = null
+                        }
+
+                        /**
+                         * 드래그가 종료됐을 때 (드롭 여부와 관계없이)
+                         */
+                        override fun onEnded(event: DragAndDropEvent) {
+                            desiredVelocity = 0f
+                            lastDragY = null
+                            dndState.onDragInterrupted()
+                            targetedDropIndex = null
+                        }
+
+                        /**
+                         * 드롭 실행
+                         *
+                         * [문제점 1] ClipData 파싱이 동기적으로 수행됨
+                         * -> 큰 데이터의 경우 UI 블로킹 가능
+                         *
+                         * [문제점 2] 에러 처리가 단순히 false 반환
+                         * -> 사용자에게 실패 이유를 알려주지 않음
+                         */
+                        override fun onDrop(event: DragAndDropEvent): Boolean {
+                            val text = event
+                                .toAndroidDragEvent()
+                                .clipData
+                                ?.getItemAt(0)
+                                ?.text
+                                ?.toString()
+
+                            val draggedId = text?.toIntOrNull() ?: return false
+                            val droppedItem = items.firstOrNull { it.id == draggedId }
+                                ?: return false
+
+                            val y = event.toAndroidDragEvent().y - currentContainerTopOffset
+                            val at = computeTargetIndex(
+                                y = y,
+                                listState = listState,
+                                totalCount = items.size,
+                                headerOffset = 0f
+                            )
 
                             /**
-                             * 드래그 중 이동할 때
+                             * 최종 삽입 인덱스 계산
                              *
-                             * [성능 문제점] 매 프레임마다 computeTargetIndex 호출
-                             * -> 리스트가 길어지면 성능 이슈 가능
-                             * -> 스로틀링이나 디바운싱 적용 고려
+                             * [문제점] 이 로직이 View에 직접 구현되어 있음
+                             * -> 테스트하기 어렵고, 재사용성이 떨어짐
+                             * -> UseCase나 ViewModel로 분리 권장
                              */
-                            override fun onMoved(event: DragAndDropEvent) {
-                                val y = event.toAndroidDragEvent().y
-                                val last = lastDragY
-                                if (last != null) {
-                                    val dy = y - last
-                                    dndState.onDrag(Offset(0f, dy))
-                                }
-                                lastDragY = y
-                                println("onMoved: $y") // 528부터 시작됨
-                                targetedDropIndex = computeTargetIndex(
-                                    y = y,
-                                    listState = listState,
-                                    totalCount = items.size,
-                                    headerOffset = 0f
-                                )
-                            }
 
-                            /**
-                             * 드래그가 타겟 영역을 벗어났을 때
-                             */
-                            override fun onExited(event: DragAndDropEvent) {
-                                desiredVelocity = 0f
-                                lastDragY = null
-                                targetedDropIndex = null
-                            }
-
-                            /**
-                             * 드래그가 종료됐을 때 (드롭 여부와 관계없이)
-                             */
-                            override fun onEnded(event: DragAndDropEvent) {
-                                desiredVelocity = 0f
-                                lastDragY = null
-                                dndState.onDragInterrupted()
-                                targetedDropIndex = null
-                            }
-
-                            /**
-                             * 드롭 실행
-                             *
-                             * [문제점 1] ClipData 파싱이 동기적으로 수행됨
-                             * -> 큰 데이터의 경우 UI 블로킹 가능
-                             *
-                             * [문제점 2] 에러 처리가 단순히 false 반환
-                             * -> 사용자에게 실패 이유를 알려주지 않음
-                             */
-                            override fun onDrop(event: DragAndDropEvent): Boolean {
-                                val text = event
-                                    .toAndroidDragEvent()
-                                    .clipData
-                                    ?.getItemAt(0)
-                                    ?.text
-                                    ?.toString()
-
-                                val draggedId = text?.toIntOrNull() ?: return false
-                                val droppedItem = items.firstOrNull { it.id == draggedId }
-                                    ?: return false
-
-                                val y = event.toAndroidDragEvent().y
-                                val at = computeTargetIndex(
-                                    y = y,
-                                    listState = listState,
-                                    totalCount = items.size,
-                                    headerOffset = 0f
-                                )
-
-                                /**
-                                 * 최종 삽입 인덱스 계산
-                                 *
-                                 * [문제점] 이 로직이 View에 직접 구현되어 있음
-                                 * -> 테스트하기 어렵고, 재사용성이 떨어짐
-                                 * -> UseCase나 ViewModel로 분리 권장
-                                 */
-                                val currentIndex = items.indexOfFirst { it.id == draggedId }
-                                val predictedInsertIndex = if (currentIndex != -1) {
-                                    if (currentIndex < at) {
-                                        (at - 1).coerceIn(0, (items.size - 1).coerceAtLeast(0))
-                                    } else {
-                                        at.coerceIn(0, (items.size - 1).coerceAtLeast(0))
-                                    }
-                                } else {
-                                    at.coerceIn(0, (items.size - 1).coerceAtLeast(0))
-                                }
-
-                                // 아이템 이동 수행
-                                items = moveItem(items, droppedItem, at)
-                                targetedDropIndex = null
-
-                                // 드롭 완료 후 해당 위치로 스크롤
-//                                scrollScope.launch {
-//                                    if (items.isNotEmpty()) {
-//                                        listState.animateScrollToItem(
-//                                            index = predictedInsertIndex,
-//                                            scrollOffset = 0
-//                                        )
-//                                    }
-//                                }
-                                return true
-                            }
+                            // 아이템 이동 수행
+                            items = moveItem(items, droppedItem, at)
+                            targetedDropIndex = null
+                            return true
                         }
                     }
-                )
+                }
+            )
+    ) {
+        LazyColumn(
+            state = listState,
+            modifier = Modifier.fillMaxSize()
         ) {
-            LazyColumn(
-                state = listState,
-                modifier = Modifier.fillMaxSize()
-            ) {
-                itemsIndexed(
-                    items = items,
-                    key = { _, item -> item.id }
-                ) { index, item ->
-                    Column(
-                        /**
-                         * animateItem() 사용
-                         *
-                         * [주의] Compose Foundation 1.7.0+ 필요
-                         * 이전 버전에서는 animateItemPlacement() 사용
-                         */
-                        modifier = Modifier.animateItemPlacement()
-                    ) {
-                        /**
-                         * 드롭 인디케이터 (아이템 위)
-                         *
-                         * [UX 문제점] 인디케이터 높이가 12.dp로 작음
-                         * -> 드래그 중 시각적 피드백이 약함
-                         * -> 더 눈에 띄는 디자인 고려 필요
-                         */
-                        if (targetedDropIndex == index) {
-                            Box(
-                                modifier = Modifier
-                                    .padding(horizontal = 16.dp)
-                                    .fillMaxWidth()
-                                    .height(12.dp)
-                                    .background(
-                                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
-                                        shape = RoundedCornerShape(2.dp)
-                                    )
-                            )
-                        }
-
-                        /**
-                         * 아이템 행 (드래그 소스)
-                         *
-                         * [문제점] dragAndDropSource가 조건부로 적용됨
-                         * -> Modifier 체인이 복잡해짐
-                         * -> 별도 함수로 추출하는 것이 좋음
-                         */
-                        DemoItemRow(
+            itemsIndexed(
+                items = items,
+                key = { _, item -> item.id }
+            ) { index, item ->
+                Column(
+                    /**
+                     * animateItem() 사용
+                     *
+                     * [주의] Compose Foundation 1.7.0+ 필요
+                     * 이전 버전에서는 animateItemPlacement() 사용
+                     */
+                    modifier = Modifier.animateItemPlacement()
+                ) {
+                    /**
+                     * 드롭 인디케이터 (아이템 위)
+                     *
+                     * [UX 문제점] 인디케이터 높이가 12.dp로 작음
+                     * -> 드래그 중 시각적 피드백이 약함
+                     * -> 더 눈에 띄는 디자인 고려 필요
+                     */
+                    if (targetedDropIndex == index) {
+                        Box(
                             modifier = Modifier
-                                .then(
-                                    if (isEditMode) {
-                                        Modifier.dragAndDropSource {
-                                            detectTapGestures(
-                                                /**
-                                                 * [UX 문제점] 탭 동작이 현재 아무것도 하지 않음
-                                                 * -> 상세 화면 이동 등의 동작 추가 가능
-                                                 */
-                                                onTap = {
-                                                    println("onTap")
-                                                    // 데모에서는 탭 시 아무 동작 없음
-                                                },
-                                                /**
-                                                 * 롱프레스로 드래그 시작
-                                                 *
-                                                 * [UX 문제점] 롱프레스 시간이 기본값(400ms)
-                                                 * -> 일부 사용자에게는 너무 길거나 짧을 수 있음
-                                                 * -> 접근성을 위해 조정 가능하게 만들 수 있음
-                                                 */
-                                                onLongPress = {
-                                                    startTransfer(
-                                                        transferData = DragAndDropTransferData(
-                                                            clipData = ClipData.newPlainText(
-                                                                "demo/item-id",
-                                                                item.id.toString()
-                                                            )
+                                .padding(horizontal = 16.dp)
+                                .fillMaxWidth()
+                                .height(12.dp)
+                                .background(
+                                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+                                    shape = RoundedCornerShape(2.dp)
+                                )
+                        )
+                    }
+
+                    /**
+                     * 아이템 행 (드래그 소스)
+                     *
+                     * [문제점] dragAndDropSource가 조건부로 적용됨
+                     * -> Modifier 체인이 복잡해짐
+                     * -> 별도 함수로 추출하는 것이 좋음
+                     */
+                    DemoItemRow(
+                        modifier = Modifier
+                            .then(
+                                if (isEditMode) {
+                                    Modifier.dragAndDropSource {
+                                        detectTapGestures(
+                                            /**
+                                             * [UX 문제점] 탭 동작이 현재 아무것도 하지 않음
+                                             * -> 상세 화면 이동 등의 동작 추가 가능
+                                             */
+                                            onTap = {
+                                                println("onTap")
+                                                // 데모에서는 탭 시 아무 동작 없음
+                                            },
+                                            /**
+                                             * 롱프레스로 드래그 시작
+                                             *
+                                             * [UX 문제점] 롱프레스 시간이 기본값(400ms)
+                                             * -> 일부 사용자에게는 너무 길거나 짧을 수 있음
+                                             * -> 접근성을 위해 조정 가능하게 만들 수 있음
+                                             */
+                                            onLongPress = {
+                                                startTransfer(
+                                                    transferData = DragAndDropTransferData(
+                                                        clipData = ClipData.newPlainText(
+                                                            "demo/item-id",
+                                                            item.id.toString()
                                                         )
                                                     )
-                                                }
-                                            )
-                                        }
-                                    } else {
-                                        Modifier
+                                                )
+                                            }
+                                        )
                                     }
-                                ),
-                            item = item,
-                            isEditMode = isEditMode
-                        )
+                                } else {
+                                    Modifier
+                                }
+                            ),
+                        item = item,
+                        isEditMode = isEditMode
+                    )
 
-                        /**
-                         * 드롭 인디케이터 (마지막 아이템 아래)
-                         */
-                        if (index == items.size - 1 && targetedDropIndex == items.size) {
-                            Box(
-                                modifier = Modifier
-                                    .padding(horizontal = 16.dp)
-                                    .fillMaxWidth()
-                                    .height(12.dp)
-                                    .background(
-                                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
-                                        shape = RoundedCornerShape(2.dp)
-                                    )
-                            )
-                        }
+                    /**
+                     * 드롭 인디케이터 (마지막 아이템 아래)
+                     */
+                    if (index == items.size - 1 && targetedDropIndex == items.size) {
+                        Box(
+                            modifier = Modifier
+                                .padding(horizontal = 16.dp)
+                                .fillMaxWidth()
+                                .height(12.dp)
+                                .background(
+                                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+                                    shape = RoundedCornerShape(2.dp)
+                                )
+                        )
                     }
                 }
             }
         }
     }
 }
+
 
 /**
  * 드롭 타겟 인덱스 계산 함수
