@@ -45,43 +45,7 @@ class MainActivity : ComponentActivity() {
  */
 @Composable
 fun DemoTabScreen() {
-    var selectedTabIndex by remember { mutableIntStateOf(0) }
-
-    val tabs = listOf(
-        "Legacy DnD" to "기존 구현",
-        "HMDraggableList" to "개선된 구현"
-    )
-
-    Column(modifier = Modifier
-        .fillMaxSize()
-        .onGloballyPositioned { coordinate ->
-            println("부모뷰: ${coordinate.size}")
-        }) {
-        TabRow(
-            selectedTabIndex = selectedTabIndex,
-            modifier = Modifier.padding(top = 48.dp)
-        ) {
-            tabs.forEachIndexed { index, (title, subtitle) ->
-                Tab(
-                    selected = selectedTabIndex == index,
-                    onClick = { selectedTabIndex = index },
-                    text = {
-                        Column {
-                            Text(text = title)
-                            Text(
-                                text = subtitle,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                )
-            }
-        }
-
-        when (selectedTabIndex) {
-            0 -> DragAndDropDemoView()
-            1 -> HMDraggableListDemoView()
-        }
+    Column(Modifier.fillMaxSize().padding(top = 64.dp)) {
+        DragAndDropDemoView()
     }
 }

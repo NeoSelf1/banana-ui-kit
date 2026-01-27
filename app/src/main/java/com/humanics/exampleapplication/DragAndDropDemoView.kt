@@ -1,5 +1,6 @@
 package com.humanics.exampleapplication
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -70,17 +71,11 @@ fun DragAndDropDemoView() {
     // === HMDraggableList 사용 ===
     // iOS HMDraggableScrollView와 동일한 인터페이스
     HMDraggableList(
-        // iOS: @Binding var items
         items = items,
-
-        // iOS: rowHeight: CGFloat = 60 → 72.dp (기존 DragAndDropDemoView 값 유지)
         rowHeight = 72.dp,
-
-        // iOS: isDragEnabled: Bool
         isDragEnabled = true,
-
-        // iOS: onReorder: (() -> Void)?
         onReorder = { item, targetIndex ->
+            Log.d("ReorderDebug", "onReorder: $item, targetIndex: $targetIndex")
             val currentIndex = items.indexOfFirst { it.id == item.id }
             if (currentIndex != -1 && currentIndex != targetIndex) {
                 val mutableList = items.toMutableList()
@@ -89,15 +84,7 @@ fun DragAndDropDemoView() {
                 items = mutableList
             }
         },
-
-        // iOS: onTapRow: @escaping (Item) -> Void
-        onTapRow = { item ->
-            // 탭 시 처리
-            println("Tapped: ${item.title}")
-        },
-
-        // iOS: @ViewBuilder itemContent: @escaping (Item, Bool) -> ItemRow
-        // Bool 파라미터는 isDragging
+        onTapRow = { item -> println("Tapped: ${item.title}") },
         itemContent = { item, isDragging ->
             DemoItemRowContent(
                 item = item,
@@ -105,15 +92,8 @@ fun DragAndDropDemoView() {
                 isEditMode = true
             )
         },
-
-        // iOS: @ViewBuilder header: () -> Header
-        // 현재 DragAndDropDemoView는 header 없음 (null)
         header = null,
-
-        // iOS: @ViewBuilder footer: () -> Footer
-        // 현재 DragAndDropDemoView는 footer 없음 (null)
         footer = null,
-
         modifier = Modifier.fillMaxSize()
     )
 }

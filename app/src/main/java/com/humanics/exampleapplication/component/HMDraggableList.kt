@@ -2,6 +2,7 @@ package com.humanics.exampleapplication.component
 
 import android.content.ClipData
 import android.content.ClipDescription
+import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.draganddrop.dragAndDropSource
@@ -68,17 +69,10 @@ import kotlin.math.abs
  * - 개선: withFrameNanos 사용으로 정확한 프레임 동기화
  *
  * [개선 4] 드래그 중인 아이템 추적
- * - 기존: 드래그 중인 아이템 시각적 구분 없음
- * - 개선: draggingItemId로 추적하여 opacity 0.8 적용
  *
  * [개선 6] Header/Footer 지원
  * - 기존: 리스트 아이템만 표시
  * - 개선: header, footer 컴포저블 슬롯 제공
- *
- * [개선 7] 외부에서 주입 가능한 파라미터들
- * - rowHeight: 각 행의 높이
- * - headerOffset: 드롭 인덱스 계산 시 헤더 오프셋
- * - listState: LazyListState 외부 주입 가능
  *
  * @param items 리스트에 표시할 아이템 목록
  * @param rowHeight 각 행의 고정 높이
@@ -224,15 +218,13 @@ fun <T : Draggable> HMDraggableList(
         val currentIndex = items.indexOfFirst { it.id == item.id }
         if (currentIndex == -1) return
 
-        // LazyIndex를 items 리스트 상대 인덱스로 변환
         val targetItemsIndex = (targetLazyIndex - headerCount).coerceIn(0, items.size)
 
         // 이동 후의 최종 인덱스 계산
         // - targetItemsIndex가 currentIndex보다 크면, 아이템이 빠지면서 하나씩 당겨지므로 -1
-        // - 예: [A, B, C]에서 A(0)를 C(2) 위치로 옮기면, A 삭제([B, C]) 후 index 1에 삽입([B, A, C])
         val insertIndex = if (targetItemsIndex > currentIndex) targetItemsIndex - 1 else targetItemsIndex
-
-        if (insertIndex == currentIndex) return
+        // items 갱신이 되지 않는 이슈가 존재 때문에, 이러한 비교대조 로직 일단 제거
+//        if (targetItemsIndex == currentIndex) return
 
         onReorder(item, insertIndex)
     }
