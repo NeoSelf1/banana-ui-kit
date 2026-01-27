@@ -1,5 +1,6 @@
 package com.humanics.exampleapplication.component
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,6 +16,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -46,10 +48,14 @@ fun DemoItemRow(
     item: DemoItem,
     isEditMode: Boolean = true
 ) {
+    SideEffect {
+        Log.d("디버깅", "Row recomposed: id=${item.id}")
+    }
+
     Row(
         modifier = modifier
             .fillMaxWidth()
-//            .background(MaterialTheme.colorScheme.surface)
+            .background(MaterialTheme.colorScheme.surface)
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

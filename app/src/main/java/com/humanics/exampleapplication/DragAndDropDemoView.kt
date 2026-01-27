@@ -1,7 +1,9 @@
 package com.humanics.exampleapplication
 
+import android.R.attr.key
 import android.content.ClipData
 import android.content.ClipDescription
+import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.draganddrop.dragAndDropSource
@@ -203,43 +205,44 @@ fun DragAndDropDemoView() {
                 }
             )
     ) {
-        Column(Modifier.fillMaxSize().verticalScroll(scrollState)) {
-            items.forEachIndexed { index, item ->
-                // 드롭 인디케이터 (아이템 위)
-                if (targetedDropIndex == index) {
-                    DropIndicator()
-                }
-
-                key(item.id) {
-                    DemoItemRow(
-                        modifier = Modifier
-                            .height(rowHeight)
-                            .dragAndDropSource {
-                                detectTapGestures(
-                                    onTap = { /* 탭 동작 */ },
-                                    onLongPress = {
-                                        startTransfer(
-                                            transferData = DragAndDropTransferData(
-                                                clipData = ClipData.newPlainText(
-                                                    "demo/item-id",
-                                                    item.id.toString()
+            Column(Modifier
+                .fillMaxSize()
+                .verticalScroll(scrollState)) {
+                items.forEachIndexed { index, item ->
+                    if (targetedDropIndex == index) {
+                        DropIndicator()
+                    }
+                    key(item.id) {
+                        DemoItemRow(
+                            modifier = Modifier
+                                .height(rowHeight)
+                                .dragAndDropSource {
+                                    detectTapGestures(
+                                        onTap = { },
+                                        onLongPress = {
+                                            startTransfer(
+                                                transferData = DragAndDropTransferData(
+                                                    clipData = ClipData.newPlainText(
+                                                        "demo/item-id",
+                                                        item.id.toString()
+                                                    )
                                                 )
                                             )
-                                        )
-                                    }
-                                )
-                            },
-                        item = item,
-                        isEditMode = true
-                    )
-                }
-                // 마지막 아이템 뒤 드롭 인디케이터
-                if (index == items.size - 1 && targetedDropIndex == items.size) {
-                    DropIndicator()
+                                        }
+                                    )
+                                },
+                            item = item,
+                            isEditMode = true
+                        )
+                    }
+
+                    // 마지막 아이템 뒤 드롭 인디케이터
+                    if (index == items.size - 1 && targetedDropIndex == items.size) {
+                        DropIndicator()
+                    }
                 }
             }
         }
-    }
 }
 /**
  * 드롭 위치 인디케이터
