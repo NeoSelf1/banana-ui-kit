@@ -1,0 +1,17 @@
+# iOS
+
+*.DS_Store
+
+#Android
+local.properties
+*.iml
+.gradle
+
+.idea
+build
+captures
+.externalNativeBuild
+.cxx
+
+# Claude Code Skills 파일
+.claude/skills
