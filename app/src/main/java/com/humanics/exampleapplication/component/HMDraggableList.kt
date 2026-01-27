@@ -27,7 +27,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
@@ -36,7 +35,6 @@ import androidx.compose.ui.draganddrop.DragAndDropTarget
 import androidx.compose.ui.draganddrop.DragAndDropTransferData
 import androidx.compose.ui.draganddrop.mimeTypes
 import androidx.compose.ui.draganddrop.toAndroidDragEvent
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -46,7 +44,6 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 import kotlin.math.abs
 
 /**
@@ -60,19 +57,15 @@ import kotlin.math.abs
  * - 기존: RoutineDetailView에 DnD 로직이 직접 구현되어 있었음
  * - 개선: 제네릭 타입 T를 사용하여 어떤 데이터 타입에도 적용 가능
  *
- * [개선 2] 콜백 기반 아키텍처
- * - 기존: View에서 직접 리스트 조작
- * - 개선: onMoveItem, onTapRow, onReorder 콜백으로 ViewModel과 완전 분리
- *
- * [개선 3] 햅틱 피드백 최적화
+ * [개선 2] 햅틱 피드백 최적화
  * - 기존: 햅틱 피드백 없음
  * - 개선: targetedDropIndex 변경 시에만 햅틱 피드백 (prevTargetedDropIndex 비교)
  *
- * [개선 4] 프레임 동기화 자동 스크롤
+ * [개선 3] 프레임 동기화 자동 스크롤
  * - 기존: delay(16)으로 약 60fps 업데이트 (정확하지 않음)
  * - 개선: withFrameNanos 사용으로 정확한 프레임 동기화
  *
- * [개선 5] 드래그 중인 아이템 추적
+ * [개선 4] 드래그 중인 아이템 추적
  * - 기존: 드래그 중인 아이템 시각적 구분 없음
  * - 개선: draggingItemId로 추적하여 opacity 0.8 적용
  *
@@ -117,11 +110,6 @@ fun <T> HMDraggableList(
 ) {
     val density = LocalDensity.current
     val hapticFeedback = LocalHapticFeedback.current
-    val scrollScope = rememberCoroutineScope()
-
-    // ========================================
-    // 상태 관리 (레거시 대비 개선점: 체계적인 상태 분리)
-    // ========================================
 
     // 드롭 타겟 인덱스 (시각적 피드백용)
     var targetedDropIndex by remember { mutableStateOf<Int?>(null) }
@@ -221,10 +209,6 @@ fun <T> HMDraggableList(
 
         // Window 좌표 → Box 로컬 좌표 변환
         val localY = y - containerTopOffset
-
-        // rowHeight를 픽셀로 변환
-        val rowHeightPx = with(density) { rowHeight.toPx() }
-
         // 첫 번째 아이템보다 위인 경우
         val first = visibleItems.first()
         val firstMid = first.offset + (first.size / 2f)
@@ -241,11 +225,6 @@ fun <T> HMDraggableList(
         return (last.index + 1).coerceAtMost(items.size)
     }
 
-    // ========================================
-    // [개선] 아이템 이동 함수 (콜백 기반)
-    // 레거시: View에서 직접 리스트 조작
-    // 개선: 콜백으로 ViewModel에 위임
-    // ========================================
     fun moveItem(item: T, targetIndex: Int) {
         val currentIndex = items.indexOfFirst { getItemId(it) == getItemId(item) }
         if (currentIndex == -1 || currentIndex == targetIndex) return
@@ -254,14 +233,9 @@ fun <T> HMDraggableList(
         onReorder()
     }
 
-    // ========================================
-    // 메인 UI
-    // ========================================
     Box(
         modifier = modifier
             .fillMaxSize()
-            // [개선] Box의 Window 기준 Y 위치 측정
-            // DragEvent.y에서 이 값을 빼면 Box 로컬 좌표가 됨
             .onGloballyPositioned { coordinates ->
                 containerTopOffset = coordinates.positionInWindow().y
             }
@@ -312,32 +286,9 @@ fun <T> HMDraggableList(
                                 ?: return false
 
                             val y = event.toAndroidDragEvent().y
-                            val at = computeTargetIndex(y)
-
-                            val currentIndex = items.indexOfFirst { getItemId(it) == draggedId }
-                            val predictedInsertIndex = if (currentIndex != -1) {
-                                if (currentIndex < at) {
-                                    (at - 1).coerceIn(0, (items.size - 1).coerceAtLeast(0))
-                                } else {
-                                    at.coerceIn(0, (items.size - 1).coerceAtLeast(0))
-                                }
-                            } else {
-                                at.coerceIn(0, (items.size - 1).coerceAtLeast(0))
-                            }
-
-                            moveItem(droppedItem, at)
+                            moveItem(droppedItem, computeTargetIndex(y))
                             targetedDropIndex = null
                             draggingItemId = null
-
-                            // 드롭 완료 후 해당 위치로 스크롤
-                            scrollScope.launch {
-                                if (items.isNotEmpty()) {
-                                    listState.animateScrollToItem(
-                                        index = predictedInsertIndex,
-                                        scrollOffset = 0
-                                    )
-                                }
-                            }
                             return true
                         }
                     }
@@ -349,12 +300,7 @@ fun <T> HMDraggableList(
             state = listState,
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // [개선] Header 슬롯 지원
-            header?.let {
-                item(key = "header") {
-                    it()
-                }
-            }
+            header?.let { item(key = "header") { it() } }
 
             // Items with drop indicators
             itemsIndexed(
@@ -364,20 +310,12 @@ fun <T> HMDraggableList(
                 val itemId = getItemId(item)
                 val isDragging = draggingItemId == itemId
 
-                Column(
-                    modifier = Modifier.animateItem()
-                ) {
-                    // Drop indicator (위치 표시)
-                    if (targetedDropIndex == index) {
-                        DropIndicator()
-                    }
+                Column(Modifier.animateItem()) {
+                    if (targetedDropIndex == index) { DropIndicator() }
 
-                    // Item content with drag source
                     Box(
                         modifier = Modifier
                             .height(rowHeight)
-                            // [개선] 드래그 중인 아이템 시각적 피드백
-                            .alpha(if (isDragging) 0.8f else 1f)
                             .then(
                                 if (isDragEnabled) {
                                     Modifier.dragAndDropSource {
@@ -417,12 +355,7 @@ fun <T> HMDraggableList(
                 }
             }
 
-            // [개선] Footer 슬롯 지원
-            footer?.let {
-                item(key = "footer") {
-                    it()
-                }
-            }
+            footer?.let { item(key = "footer") { it() } }
         }
     }
 }
