@@ -2,8 +2,10 @@ package com.humanics.exampleapplication.component
 
 import android.content.ClipData
 import android.content.ClipDescription
-import android.util.Log
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.draganddrop.dragAndDropSource
 import androidx.compose.foundation.draganddrop.dragAndDropTarget
@@ -16,18 +18,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
@@ -36,8 +38,8 @@ import androidx.compose.ui.draganddrop.DragAndDropTarget
 import androidx.compose.ui.draganddrop.DragAndDropTransferData
 import androidx.compose.ui.draganddrop.mimeTypes
 import androidx.compose.ui.draganddrop.toAndroidDragEvent
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
@@ -47,43 +49,24 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.humanics.exampleapplication.model.Draggable
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlin.math.abs
 
 /**
- * HMDraggableList - Humania-android의 프로덕션 DnD 컴포넌트
+ * HMDraggableList - Column 기반 드래그 앤 드롭 리스트 컴포넌트
  *
- * iOS HMDraggableScrollView와 동일한 인터페이스를 제공하는 재사용 가능한 드래그 앤 드롭 리스트 컴포넌트
- *
- * === 레거시 코드 대비 개선점 ===
- *
- * [개선 1] 재사용 가능한 제네릭 컴포넌트
- * - 기존: RoutineDetailView에 DnD 로직이 직접 구현되어 있었음
- * - 개선: 제네릭 타입 T를 사용하여 어떤 데이터 타입에도 적용 가능
- *
- * [개선 2] 햅틱 피드백 최적화
- * - 기존: 햅틱 피드백 없음
- * - 개선: targetedDropIndex 변경 시에만 햅틱 피드백 (prevTargetedDropIndex 비교)
- *
- * [개선 3] 프레임 동기화 자동 스크롤
- * - 기존: delay(16)으로 약 60fps 업데이트 (정확하지 않음)
- * - 개선: withFrameNanos 사용으로 정확한 프레임 동기화
- *
- * [개선 4] 드래그 중인 아이템 추적
- *
- * [개선 6] Header/Footer 지원
- * - 기존: 리스트 아이템만 표시
- * - 개선: header, footer 컴포저블 슬롯 제공
+ * Column + verticalScroll 구조를 사용하여 key 기반 스크롤 추적 문제를 근본적으로 해결.
+ * ScrollState는 pixel offset 기반이므로 아이템 재정렬 시 스크롤 위치가 자동으로 유지됨.
  *
  * @param items 리스트에 표시할 아이템 목록
  * @param rowHeight 각 행의 고정 높이
  * @param isDragEnabled 드래그 기능 활성화 여부
- * @param onReorder 아이템 재정렬 완료 시 호출되는 콜백
+ * @param onReorder 아이템 재정렬 완료 시 호출되는 콜백 (item, targetIndex)
  * @param onTapRow 행 탭 시 호출되는 콜백
- * @param onMoveItem 아이템 이동 시 호출되는 콜백 (item, targetIndex)
  * @param itemContent 각 아이템의 컨텐츠를 생성하는 composable (item, isDragging)
  * @param header 리스트 상단에 표시할 헤더 컴포저블
  * @param footer 리스트 하단에 표시할 푸터 컴포저블
- * @param listState LazyListState (외부에서 주입 가능)
+ * @param scrollState ScrollState (외부에서 주입 가능)
  * @param modifier Modifier
  */
 @OptIn(ExperimentalFoundationApi::class)
@@ -97,47 +80,46 @@ fun <T : Draggable> HMDraggableList(
     itemContent: @Composable (T, Boolean) -> Unit,
     header: @Composable (() -> Unit)? = null,
     footer: @Composable (() -> Unit)? = null,
-    listState: LazyListState = rememberLazyListState(),
+    scrollState: ScrollState = rememberScrollState(),
     modifier: Modifier = Modifier
 ) {
     val density = LocalDensity.current
     val hapticFeedback = LocalHapticFeedback.current
+    val coroutineScope = rememberCoroutineScope()
+    val rowHeightPx = with(density) { rowHeight.toPx() }
 
-    // 드롭 타겟 인덱스 (시각적 피드백용)
+    // 드롭 타겟 인덱스 (items 리스트 기준, 0..items.size)
     var targetedDropIndex by remember { mutableStateOf<Int?>(null) }
-
-    // [개선] 이전 드롭 인덱스 (햅틱 피드백 최적화용)
     var prevTargetedDropIndex by remember { mutableStateOf<Int?>(null) }
 
     // 자동 스크롤 속도
     var autoScrollVelocity by remember { mutableFloatStateOf(0f) }
 
-    // 마지막 드래그 Y 좌표
+    // 마지막 드래그 Y 좌표 (Window 기준)
     var lastDragY by remember { mutableStateOf<Float?>(null) }
 
-    // [개선] 드래그 중인 아이템 ID 추적 (시각적 피드백용)
+    // 드래그 중인 아이템 ID 추적 (시각적 피드백용)
     var draggingItemId by remember { mutableStateOf<Int?>(null) }
 
-    // [개선] 컨테이너의 Window 기준 Y 오프셋 측정
-    // DragEvent.y는 Window 기준 좌표이므로, Box의 위치를 빼야 로컬 좌표가 됨
+    // 컨테이너의 Window 기준 Y 오프셋 및 높이
     var containerTopOffset by remember { mutableFloatStateOf(0f) }
+    var containerHeight by remember { mutableFloatStateOf(0f) }
+
+    // 헤더 높이 (computeTargetIndex에서 사용)
+    var headerHeightPx by remember { mutableFloatStateOf(0f) }
 
     // ========================================
-    // 자동 스크롤 속도 계산용 DnD 상태
+    // 자동 스크롤 속도 계산
     // ========================================
-    val dndState = rememberDragAndDropListState(lazyListState = listState) { _, _ ->
+    fun updateAutoScrollVelocity() {
         val y = lastDragY
         if (y == null) {
             autoScrollVelocity = 0f
-            return@rememberDragAndDropListState
+            return
         }
-        val viewportStart = listState.layoutInfo.viewportStartOffset.toFloat()
-        val viewportEnd = listState.layoutInfo.viewportEndOffset.toFloat()
+        val toTop = y - containerTopOffset
+        val toBottom = (containerTopOffset + containerHeight) - y
 
-        val toTop = y - viewportStart
-        val toBottom = viewportEnd - y
-
-        // 상수로 분리 (레거시의 매직 넘버 문제 해결)
         val scrollThresholdPx = with(density) { SCROLL_THRESHOLD_DP.toPx() }
         val headerThresholdPx = with(density) { HEADER_THRESHOLD_DP.toPx() }
 
@@ -149,11 +131,9 @@ fun <T : Draggable> HMDraggableList(
     }
 
     // ========================================
-    // [개선] 프레임 동기화 자동 스크롤 루프
-    // 레거시: delay(16)으로 약 60fps (부정확)
-    // 개선: withFrameNanos로 정확한 프레임 동기화
+    // 프레임 동기화 자동 스크롤 루프
     // ========================================
-    LaunchedEffect(listState) {
+    LaunchedEffect(scrollState) {
         var lastTime = 0L
         while (isActive) {
             val dtNanos = withFrameNanos { now ->
@@ -165,8 +145,7 @@ fun <T : Draggable> HMDraggableList(
             if (v != 0f && dtNanos > 0L) {
                 val dtSec = dtNanos / 1_000_000_000f
                 val delta = v * dtSec
-                val consumed = listState.scrollBy(delta)
-                // 스크롤 끝에 도달하면 속도 리셋
+                val consumed = scrollState.scrollBy(delta)
                 if (abs(consumed) < 0.5f) {
                     autoScrollVelocity = 0f
                 }
@@ -175,9 +154,7 @@ fun <T : Draggable> HMDraggableList(
     }
 
     // ========================================
-    // [개선] targetedDropIndex 변경 시 햅틱 피드백
-    // 레거시: 햅틱 피드백 없음
-    // 개선: 인덱스 변경 시에만 피드백 (중복 방지)
+    // targetedDropIndex 변경 시 햅틱 피드백
     // ========================================
     LaunchedEffect(targetedDropIndex) {
         if (prevTargetedDropIndex != targetedDropIndex && targetedDropIndex != null) {
@@ -187,45 +164,28 @@ fun <T : Draggable> HMDraggableList(
     }
 
     // ========================================
-    // 드롭 타겟 인덱스 계산 함수
+    // 드롭 타겟 인덱스 계산 (items 리스트 기준 인덱스 반환)
     //
-    // [핵심] DragEvent.y는 Window 기준 좌표
-    // - containerTopOffset을 빼서 Box 로컬 좌표로 변환
-    // - visibleItemsInfo.offset은 LazyColumn 내부 좌표 (Box와 동일)
-    //
-    // [개선] rowHeight를 활용한 중간점 계산
+    // Window Y → 컨테이너 로컬 Y → 스크롤 보정한 절대 Y → 헤더 제외 → rowHeight로 인덱스 계산
     // ========================================
     fun computeTargetIndex(y: Float): Int {
-        val layoutInfo = listState.layoutInfo
-        val visibleItems = layoutInfo.visibleItemsInfo
-        if (visibleItems.isEmpty()) return 0
-
-        // Window 좌표 → Box 로컬 좌표 변환
         val localY = y - containerTopOffset
+        val absoluteY = localY + scrollState.value
+        val relativeY = absoluteY - headerHeightPx
+        if (relativeY <= 0f) return 0
 
-        // 각 아이템의 중간점과 비교하여 타겟 인덱스 결정
-        for (info in visibleItems) {
-            val mid = info.offset + (info.size / 2f)
-            if (localY < mid) return info.index
-        }
-
-        // 모든 가시 아이템 아래에 있는 경우
-        return layoutInfo.totalItemsCount
+        val index = (relativeY / rowHeightPx).toInt()
+        val midOffset = relativeY - (index * rowHeightPx)
+        val adjustedIndex = if (midOffset > rowHeightPx / 2f) index + 1 else index
+        return adjustedIndex.coerceIn(0, items.size)
     }
 
-    fun moveItem(item: T, targetLazyIndex: Int) {
-        val headerCount = if (header != null) 1 else 0
+    fun moveItem(item: T, targetItemsIndex: Int) {
         val currentIndex = items.indexOfFirst { it.id == item.id }
         if (currentIndex == -1) return
 
-        val targetItemsIndex = (targetLazyIndex - headerCount).coerceIn(0, items.size)
-
-        // 이동 후의 최종 인덱스 계산
-        // - targetItemsIndex가 currentIndex보다 크면, 아이템이 빠지면서 하나씩 당겨지므로 -1
-        val insertIndex = if (targetItemsIndex > currentIndex) targetItemsIndex - 1 else targetItemsIndex
-        // items 갱신이 되지 않는 이슈가 존재 때문에, 이러한 비교대조 로직 일단 제거
-//        if (targetItemsIndex == currentIndex) return
-
+        val coercedTarget = targetItemsIndex.coerceIn(0, items.size)
+        val insertIndex = if (coercedTarget > currentIndex) coercedTarget - 1 else coercedTarget
         onReorder(item, insertIndex)
     }
 
@@ -234,6 +194,7 @@ fun <T : Draggable> HMDraggableList(
             .fillMaxSize()
             .onGloballyPositioned { coordinates ->
                 containerTopOffset = coordinates.positionInWindow().y
+                containerHeight = coordinates.size.height.toFloat()
             }
             .dragAndDropTarget(
                 shouldStartDragAndDrop = { event ->
@@ -244,18 +205,13 @@ fun <T : Draggable> HMDraggableList(
                         override fun onEntered(event: DragAndDropEvent) {
                             val y = event.toAndroidDragEvent().y
                             lastDragY = y
-                            dndState.onDragStart(Offset(0f, y))
                             targetedDropIndex = computeTargetIndex(y)
                         }
 
                         override fun onMoved(event: DragAndDropEvent) {
                             val y = event.toAndroidDragEvent().y
-                            val last = lastDragY
-                            if (last != null) {
-                                val dy = y - last
-                                dndState.onDrag(Offset(0f, dy))
-                            }
                             lastDragY = y
+                            updateAutoScrollVelocity()
                             targetedDropIndex = computeTargetIndex(y)
                         }
 
@@ -269,7 +225,6 @@ fun <T : Draggable> HMDraggableList(
                         override fun onEnded(event: DragAndDropEvent) {
                             autoScrollVelocity = 0f
                             lastDragY = null
-                            dndState.onDragInterrupted()
                             targetedDropIndex = null
                             draggingItemId = null
                         }
@@ -291,97 +246,112 @@ fun <T : Draggable> HMDraggableList(
                 }
             )
     ) {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            state = listState,
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(scrollState),
             verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {
-            header?.let { item(key = "header") { it() } }
+            // Header
+            header?.let {
+                Box(
+                    modifier = Modifier.onGloballyPositioned { coordinates ->
+                        headerHeightPx = coordinates.size.height.toFloat()
+                    }
+                ) {
+                    it()
+                }
+            }
 
-            // Items with drop indicators
-            // iOS HMDraggableScrollView와 동일한 로직:
-            // - 각 아이템의 위/아래에 인디케이터 표시 가능
-            // - targetedDropIndex == index: 아이템 위에 표시
-            // - targetedDropIndex == index + 1: 아이템 아래에 표시 (마지막 포함)
-            itemsIndexed(
-                items = items,
-                key = { _, item -> item.id }
-            ) { index, item ->
-                val itemId = item.id
-                val isDragging = draggingItemId == itemId
-                val isFirstItem = index == 0
-                val isLastItem = index == items.size - 1
+            // Items with drop indicators + reorder animation
+            items.forEachIndexed { index, item ->
+                key(item.id) {
+                    val itemId = item.id
+                    val isDragging = draggingItemId == itemId
+                    val isFirstItem = index == 0
+                    val isLastItem = index == items.size - 1
 
-                Column(Modifier.animateItem()) {
-                    // 아이템 위쪽 인디케이터
-                    // [개선] targetedDropIndex(LazyColumn index)를 items 리스트 상대 인덱스로 변환
-                    val adjustedDropIndex = targetedDropIndex?.let {
-                        (it - if (header != null) 1 else 0).coerceIn(0, items.size)
+                    // 리오더 애니메이션: 인덱스 변경 시 이전 위치에서 새 위치로 슬라이드
+                    var previousIndex by remember { mutableIntStateOf(index) }
+                    val offsetY = remember { Animatable(0f) }
+
+                    LaunchedEffect(index) {
+                        if (previousIndex != index) {
+                            val delta = (previousIndex - index) * rowHeightPx
+                            offsetY.snapTo(delta)
+                            offsetY.animateTo(
+                                targetValue = 0f,
+                                animationSpec = spring(
+                                    dampingRatio = 0.8f,
+                                    stiffness = 300f
+                                )
+                            )
+                            previousIndex = index
+                        }
                     }
 
-                    if (adjustedDropIndex == index) {
-                        DropIndicator(
-                            isTopRounded = isFirstItem,
-                            isBottomRounded = false
-                        )
-                    }
+                    Column(
+                        modifier = Modifier.graphicsLayer {
+                            translationY = offsetY.value
+                        }
+                    ) {
+                        // 아이템 위쪽 인디케이터
+                        if (targetedDropIndex == index) {
+                            DropIndicator(
+                                isTopRounded = isFirstItem,
+                                isBottomRounded = false
+                            )
+                        }
 
-                    Box(
-                        modifier = Modifier
-                            .height(rowHeight)
-                            .then(
-                                if (isDragEnabled) {
-                                    Modifier.dragAndDropSource {
-                                        detectTapGestures(
-                                            onTap = {
-                                                onTapRow(item)
-                                            },
-                                            onLongPress = {
-                                                draggingItemId = itemId
-                                                startTransfer(
-                                                    transferData = DragAndDropTransferData(
-                                                        clipData = ClipData.newPlainText(
-                                                            "draggable-item-id",
-                                                            itemId.toString()
+                        Box(
+                            modifier = Modifier
+                                .height(rowHeight)
+                                .fillMaxWidth()
+                                .then(
+                                    if (isDragEnabled) {
+                                        Modifier.dragAndDropSource {
+                                            detectTapGestures(
+                                                onTap = { onTapRow(item) },
+                                                onLongPress = {
+                                                    draggingItemId = itemId
+                                                    startTransfer(
+                                                        transferData = DragAndDropTransferData(
+                                                            clipData = ClipData.newPlainText(
+                                                                "draggable-item-id",
+                                                                itemId.toString()
+                                                            )
                                                         )
                                                     )
-                                                )
-                                            }
-                                        )
+                                                }
+                                            )
+                                        }
+                                    } else {
+                                        Modifier
                                     }
-                                } else {
-                                    Modifier
-                                }
-                            )
-                    ) {
-                        itemContent(item, isDragging)
-                    }
+                                )
+                        ) {
+                            itemContent(item, isDragging)
+                        }
 
-                    // 아이템 아래쪽 인디케이터 (마지막 아이템 뒤 포함)
-                    if (adjustedDropIndex == index + 1) {
-                        DropIndicator(
-                            isTopRounded = false,
-                            isBottomRounded = isLastItem
-                        )
+                        // 아이템 아래쪽 인디케이터 (마지막 아이템 뒤 포함)
+                        if (targetedDropIndex == index + 1) {
+                            DropIndicator(
+                                isTopRounded = false,
+                                isBottomRounded = isLastItem
+                            )
+                        }
                     }
                 }
             }
 
-            footer?.let { item(key = "footer") { it() } }
+            // Footer
+            footer?.let { it() }
         }
     }
 }
 
 /**
  * 드롭 위치를 나타내는 인디케이터
- *
- * iOS HMDraggableScrollView의 UnevenRoundedRectangle과 동일한 모서리 처리:
- * - 첫 번째 아이템 위: 상단 모서리 4dp, 하단 모서리 4dp
- * - 마지막 아이템 아래: 상단 모서리 4dp, 하단 모서리 4dp
- * - 중간: 상단 0dp, 하단 4dp (위쪽) / 상단 4dp, 하단 0dp (아래쪽)
- *
- * @param isTopRounded 상단 모서리를 둥글게 할지 여부
- * @param isBottomRounded 하단 모서리를 둥글게 할지 여부
  */
 @Composable
 private fun DropIndicator(
@@ -405,9 +375,6 @@ private fun DropIndicator(
     )
 }
 
-// ========================================
-// [개선] 상수 분리 (레거시의 매직 넘버 문제 해결)
-// ========================================
 private val SCROLL_THRESHOLD_DP = 96.dp
 private val HEADER_THRESHOLD_DP = 64.dp
 private const val SCROLL_VELOCITY = 1200f

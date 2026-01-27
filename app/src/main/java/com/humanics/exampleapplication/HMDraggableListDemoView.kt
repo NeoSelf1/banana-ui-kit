@@ -11,7 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -99,8 +99,8 @@ fun HMDraggableListDemoView() {
     var reorderCount by remember { mutableIntStateOf(0) }
     var lastTappedItem by remember { mutableStateOf<DemoItem?>(null) }
 
-    // LazyListState 외부 주입 (필요 시 스크롤 위치 제어 가능)
-    val listState = rememberLazyListState()
+    // ScrollState 외부 주입 (필요 시 스크롤 위치 제어 가능)
+    val scrollState = rememberScrollState()
 
     Scaffold(
         topBar = {
@@ -198,7 +198,7 @@ fun HMDraggableListDemoView() {
                 )
             },
 
-            listState = listState,
+            scrollState = scrollState,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)

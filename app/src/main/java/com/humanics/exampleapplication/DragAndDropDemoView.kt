@@ -1,6 +1,5 @@
 package com.humanics.exampleapplication
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -8,7 +7,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -69,13 +67,11 @@ fun DragAndDropDemoView() {
     var items by remember { mutableStateOf(generateSampleItems()) }
 
     // === HMDraggableList 사용 ===
-    // iOS HMDraggableScrollView와 동일한 인터페이스
     HMDraggableList(
         items = items,
         rowHeight = 72.dp,
         isDragEnabled = true,
         onReorder = { item, targetIndex ->
-            Log.d("ReorderDebug", "onReorder: $item, targetIndex: $targetIndex")
             val currentIndex = items.indexOfFirst { it.id == item.id }
             if (currentIndex != -1 && currentIndex != targetIndex) {
                 val mutableList = items.toMutableList()
@@ -117,7 +113,6 @@ private fun DemoItemRowContent(
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // 아이콘
         Box(
             modifier = Modifier
                 .size(48.dp)
@@ -140,14 +135,13 @@ private fun DemoItemRowContent(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.Center
         ) {
-            Text(
-                text = item.title,
+            Text(item.title,
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
-                text = if (isDragging) "Dragging..." else item.subtitle,
+                if (isDragging) "Dragging..." else item.subtitle,
                 style = MaterialTheme.typography.bodyMedium,
                 color = if (isDragging) {
                     MaterialTheme.colorScheme.primary
