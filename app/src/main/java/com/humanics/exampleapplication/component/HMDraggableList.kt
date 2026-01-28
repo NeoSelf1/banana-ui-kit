@@ -7,8 +7,6 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.ScrollState
@@ -35,7 +33,6 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
@@ -55,7 +52,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.humanics.exampleapplication.model.Draggable
 import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 import kotlin.math.abs
 
 /**
@@ -91,7 +87,6 @@ fun <T : Draggable> HMDraggableList(
 ) {
     val density = LocalDensity.current
     val hapticFeedback = LocalHapticFeedback.current
-    val coroutineScope = rememberCoroutineScope()
     val rowHeightPx = with(density) { rowHeight.toPx() }
 
     // 드롭 타겟 인덱스 (items 리스트 기준, 0..items.size)
@@ -256,13 +251,10 @@ fun <T : Draggable> HMDraggableList(
             verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {
             header?.let {
-                Box(
-                    modifier = Modifier.onGloballyPositioned { coordinates ->
+                Box(Modifier.onGloballyPositioned { coordinates ->
                         headerHeightPx = coordinates.size.height.toFloat()
                     }
-                ) {
-                    it()
-                }
+                ) { it() }
             }
 
             // Items with drop indicators + reorder animation
