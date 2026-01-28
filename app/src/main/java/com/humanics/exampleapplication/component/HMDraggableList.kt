@@ -291,10 +291,11 @@ fun <T : Draggable> HMDraggableList(
                     }
 
                     Column(Modifier.graphicsLayer { translationY = offsetY.value }) {
+                        val transitionDuration = 120
                         AnimatedVisibility(
                             visible = targetedDropIndex == index,
-                            enter = expandVertically(tween(150)),
-                            exit = shrinkVertically(tween(150)),
+                            enter = expandVertically(tween(transitionDuration)),
+                            exit = shrinkVertically(tween(transitionDuration)),
                         ) {
                             DropIndicator(
                                 isTopRounded = index == 0,
@@ -312,7 +313,6 @@ fun <T : Draggable> HMDraggableList(
                                             detectTapGestures(
                                                 onTap = { onTapRow(item) },
                                                 onLongPress = {
-                                                    draggingItemId = itemId
                                                     draggingItemId = item.id
                                                     startTransfer(
                                                         transferData = DragAndDropTransferData(
@@ -332,17 +332,17 @@ fun <T : Draggable> HMDraggableList(
                         ) {
                             itemContent(item, draggingItemId == item.id)
                         }
-                    }
 
-                    AnimatedVisibility(
-                        visible = targetedDropIndex == index + 1,
-                        enter = expandVertically(tween(150)),
-                        exit = shrinkVertically(tween(150)),
-                    ) {
-                        DropIndicator(
-                            isTopRounded = false,
-                            isBottomRounded = index == items.size - 1
-                        )
+                        AnimatedVisibility(
+                            visible = targetedDropIndex == index+1,
+                            enter = expandVertically(tween(transitionDuration)),
+                            exit = shrinkVertically(tween(transitionDuration)),
+                        ) {
+                            DropIndicator(
+                                isTopRounded = false,
+                                isBottomRounded = index == items.size - 1
+                            )
+                        }
                     }
                 }
             }
