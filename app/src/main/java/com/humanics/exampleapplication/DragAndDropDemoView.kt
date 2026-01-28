@@ -69,7 +69,7 @@ fun DragAndDropDemoView() {
     // === HMDraggableList 사용 ===
     HMDraggableList(
         items = items,
-        rowHeight = 72.dp,
+        rowHeight = 80.dp,
         isDragEnabled = true,
         onReorder = { item, targetIndex ->
             val currentIndex = items.indexOfFirst { it.id == item.id }

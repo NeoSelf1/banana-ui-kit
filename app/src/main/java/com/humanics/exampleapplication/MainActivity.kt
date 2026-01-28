@@ -45,7 +45,7 @@ class MainActivity : ComponentActivity() {
  */
 @Composable
 fun DemoTabScreen() {
-    Column(Modifier.fillMaxSize().padding(top = 64.dp)) {
+    Column(Modifier.fillMaxSize().padding(vertical = 64.dp)) {
         DragAndDropDemoView()
     }
 }

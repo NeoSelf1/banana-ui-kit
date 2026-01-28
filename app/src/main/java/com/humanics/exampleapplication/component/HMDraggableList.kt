@@ -290,7 +290,34 @@ fun <T : Draggable> HMDraggableList(
                         }
                     }
 
-                    Column(Modifier.graphicsLayer { translationY = offsetY.value }) {
+                    Column(
+                        Modifier
+                        .height(rowHeight)
+                        .fillMaxWidth()
+                        .graphicsLayer { translationY = offsetY.value }
+                        .then(
+                            if (isDragEnabled) {
+                                Modifier.dragAndDropSource {
+                                    detectTapGestures(
+                                        onTap = { onTapRow(item) },
+                                        onLongPress = {
+                                            draggingItemId = item.id
+                                            startTransfer(
+                                                transferData = DragAndDropTransferData(
+                                                    clipData = ClipData.newPlainText(
+                                                        "draggable-item-id",
+                                                        item.id.toString()
+                                                    )
+                                                )
+                                            )
+                                        }
+                                    )
+                                }
+                            } else {
+                                Modifier
+                            }
+                        )
+                    ) {
                         val transitionDuration = 120
                         AnimatedVisibility(
                             visible = targetedDropIndex == index,
@@ -302,39 +329,9 @@ fun <T : Draggable> HMDraggableList(
                                 isBottomRounded = false
                             )
                         }
-
-                        Box(
-                            modifier = Modifier
-                                .height(rowHeight)
-                                .fillMaxWidth()
-                                .then(
-                                    if (isDragEnabled) {
-                                        Modifier.dragAndDropSource {
-                                            detectTapGestures(
-                                                onTap = { onTapRow(item) },
-                                                onLongPress = {
-                                                    draggingItemId = item.id
-                                                    startTransfer(
-                                                        transferData = DragAndDropTransferData(
-                                                            clipData = ClipData.newPlainText(
-                                                                "draggable-item-id",
-                                                                item.id.toString()
-                                                            )
-                                                        )
-                                                    )
-                                                }
-                                            )
-                                        }
-                                    } else {
-                                        Modifier
-                                    }
-                                )
-                        ) {
-                            itemContent(item, draggingItemId == item.id)
-                        }
-
+                        itemContent(item, draggingItemId == item.id)
                         AnimatedVisibility(
-                            visible = targetedDropIndex == index+1,
+                            visible = targetedDropIndex == index + 1,
                             enter = expandVertically(tween(transitionDuration)),
                             exit = shrinkVertically(tween(transitionDuration)),
                         ) {
