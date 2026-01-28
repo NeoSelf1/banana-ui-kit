@@ -2,8 +2,14 @@ package com.humanics.exampleapplication.component
 
 import android.content.ClipData
 import android.content.ClipDescription
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
@@ -153,9 +159,6 @@ fun <T : Draggable> HMDraggableList(
         }
     }
 
-    // ========================================
-    // targetedDropIndex 변경 시 햅틱 피드백
-    // ========================================
     LaunchedEffect(targetedDropIndex) {
         if (prevTargetedDropIndex != targetedDropIndex && targetedDropIndex != null) {
             hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
@@ -252,7 +255,6 @@ fun <T : Draggable> HMDraggableList(
                 .verticalScroll(scrollState),
             verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {
-            // Header
             header?.let {
                 Box(
                     modifier = Modifier.onGloballyPositioned { coordinates ->
@@ -266,19 +268,17 @@ fun <T : Draggable> HMDraggableList(
             // Items with drop indicators + reorder animation
             items.forEachIndexed { index, item ->
                 key(item.id) {
-                    val itemId = item.id
-                    val isDragging = draggingItemId == itemId
-                    val isFirstItem = index == 0
-                    val isLastItem = index == items.size - 1
-
                     // 리오더 애니메이션: 인덱스 변경 시 이전 위치에서 새 위치로 슬라이드
                     var previousIndex by remember { mutableIntStateOf(index) }
                     val offsetY = remember { Animatable(0f) }
 
                     LaunchedEffect(index) {
                         if (previousIndex != index) {
+                            // index * Row 높이로 하여 애니메이션이 진행될 offsetPx을 계산
                             val delta = (previousIndex - index) * rowHeightPx
+                            // 기존 변경된 위치에서,
                             offsetY.snapTo(delta)
+                            // 새로 변경된 위치로 애니메이션 진행
                             offsetY.animateTo(
                                 targetValue = 0f,
                                 animationSpec = spring(
@@ -290,15 +290,14 @@ fun <T : Draggable> HMDraggableList(
                         }
                     }
 
-                    Column(
-                        modifier = Modifier.graphicsLayer {
-                            translationY = offsetY.value
-                        }
-                    ) {
-                        // 아이템 위쪽 인디케이터
-                        if (targetedDropIndex == index) {
+                    Column(Modifier.graphicsLayer { translationY = offsetY.value }) {
+                        AnimatedVisibility(
+                            visible = targetedDropIndex == index,
+                            enter = expandVertically(tween(150)),
+                            exit = shrinkVertically(tween(150)),
+                        ) {
                             DropIndicator(
-                                isTopRounded = isFirstItem,
+                                isTopRounded = index == 0,
                                 isBottomRounded = false
                             )
                         }
@@ -314,11 +313,12 @@ fun <T : Draggable> HMDraggableList(
                                                 onTap = { onTapRow(item) },
                                                 onLongPress = {
                                                     draggingItemId = itemId
+                                                    draggingItemId = item.id
                                                     startTransfer(
                                                         transferData = DragAndDropTransferData(
                                                             clipData = ClipData.newPlainText(
                                                                 "draggable-item-id",
-                                                                itemId.toString()
+                                                                item.id.toString()
                                                             )
                                                         )
                                                     )
@@ -330,23 +330,24 @@ fun <T : Draggable> HMDraggableList(
                                     }
                                 )
                         ) {
-                            itemContent(item, isDragging)
+                            itemContent(item, draggingItemId == item.id)
                         }
+                    }
 
-                        // 아이템 아래쪽 인디케이터 (마지막 아이템 뒤 포함)
-                        if (targetedDropIndex == index + 1) {
-                            DropIndicator(
-                                isTopRounded = false,
-                                isBottomRounded = isLastItem
-                            )
-                        }
+                    AnimatedVisibility(
+                        visible = targetedDropIndex == index + 1,
+                        enter = expandVertically(tween(150)),
+                        exit = shrinkVertically(tween(150)),
+                    ) {
+                        DropIndicator(
+                            isTopRounded = false,
+                            isBottomRounded = index == items.size - 1
+                        )
                     }
                 }
             }
-
-            // Footer
-            footer?.let { it() }
         }
+        footer?.let { it() }
     }
 }
 
