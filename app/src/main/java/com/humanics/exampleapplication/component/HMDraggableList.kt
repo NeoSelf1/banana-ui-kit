@@ -45,6 +45,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -204,7 +205,7 @@ fun <T : Draggable> HMDraggableList(
         modifier = modifier
             .fillMaxSize()
             .onGloballyPositioned { coordinates ->
-                containerTopOffset = coordinates.positionInWindow().y
+                containerTopOffset = coordinates.positionInRoot().y
                 containerHeight = coordinates.size.height.toFloat()
             }
             .dragAndDropTarget(
