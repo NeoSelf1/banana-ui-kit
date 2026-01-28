@@ -1,5 +1,7 @@
 package com.humanics.exampleapplication.model
 
+import com.humanics.exampleapplication.component.Draggable
+
 /**
  * DnD 데모를 위한 샘플 아이템 데이터 모델
  * Humania-android의 ExerciseSet을 단순화한 버전

@@ -50,7 +50,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.humanics.exampleapplication.model.Draggable
 import kotlinx.coroutines.isActive
 import kotlin.math.abs
 
@@ -71,6 +70,10 @@ import kotlin.math.abs
  * @param scrollState ScrollState (외부에서 주입 가능)
  * @param modifier Modifier
  */
+interface Draggable {
+    val id: Int
+}
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun <T : Draggable> HMDraggableList(
@@ -87,7 +90,7 @@ fun <T : Draggable> HMDraggableList(
 ) {
     val density = LocalDensity.current
     val hapticFeedback = LocalHapticFeedback.current
-    val rowHeightPx = with(density) { rowHeight.toPx() }
+    val overallHeightPx = with(density) { (rowHeight + DROP_INDICATOR_HEIGHT + DROP_INDICATOR_ROW_GAP).toPx() }
 
     // 드롭 타겟 인덱스 (items 리스트 기준, 0..items.size)
     var targetedDropIndex by remember { mutableStateOf<Int?>(null) }
@@ -172,9 +175,9 @@ fun <T : Draggable> HMDraggableList(
         val relativeY = absoluteY - headerHeightPx
         if (relativeY <= 0f) return 0
 
-        val index = (relativeY / rowHeightPx).toInt()
-        val midOffset = relativeY - (index * rowHeightPx)
-        val adjustedIndex = if (midOffset > rowHeightPx / 2f) index + 1 else index
+        val index = (relativeY / overallHeightPx).toInt()
+        val midOffset = relativeY - (index * overallHeightPx)
+        val adjustedIndex = if (midOffset > overallHeightPx / 2f) index + 1 else index
         return adjustedIndex.coerceIn(0, items.size)
     }
 
@@ -187,6 +190,16 @@ fun <T : Draggable> HMDraggableList(
         onReorder(item, insertIndex)
     }
 
+    // region SubComponent
+    @Composable fun dropIndicator() {
+        Box(
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+                .fillMaxWidth()
+                .height(DROP_INDICATOR_HEIGHT)
+                .background(Color.Blue, RoundedCornerShape(4.dp))
+        )
+    }
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -252,8 +265,8 @@ fun <T : Draggable> HMDraggableList(
         ) {
             header?.let {
                 Box(Modifier.onGloballyPositioned { coordinates ->
-                        headerHeightPx = coordinates.size.height.toFloat()
-                    }
+                    headerHeightPx = coordinates.size.height.toFloat()
+                }
                 ) { it() }
             }
 
@@ -267,7 +280,7 @@ fun <T : Draggable> HMDraggableList(
                     LaunchedEffect(index) {
                         if (previousIndex != index) {
                             // index * Row 높이로 하여 애니메이션이 진행될 offsetPx을 계산
-                            val delta = (previousIndex - index) * rowHeightPx
+                            val delta = (previousIndex - index) * overallHeightPx
                             // 기존 변경된 위치에서,
                             offsetY.snapTo(delta)
                             // 새로 변경된 위치로 애니메이션 진행
@@ -282,33 +295,37 @@ fun <T : Draggable> HMDraggableList(
                         }
                     }
 
+                    val isLast = index==(items.size-1)
                     Column(
                         Modifier
-                        .height(rowHeight)
-                        .fillMaxWidth()
-                        .graphicsLayer { translationY = offsetY.value }
-                        .then(
-                            if (isDragEnabled) {
-                                Modifier.dragAndDropSource {
-                                    detectTapGestures(
-                                        onTap = { onTapRow(item) },
-                                        onLongPress = {
-                                            draggingItemId = item.id
-                                            startTransfer(
-                                                transferData = DragAndDropTransferData(
-                                                    clipData = ClipData.newPlainText(
-                                                        "draggable-item-id",
-                                                        item.id.toString()
+                            .height(rowHeight+ DROP_INDICATOR_HEIGHT + DROP_INDICATOR_ROW_GAP +
+                                    (if (isLast) (DROP_INDICATOR_HEIGHT + DROP_INDICATOR_ROW_GAP) else 0.dp)
+                            ) // 순수 Row Height + DropIndicator
+                            .fillMaxWidth()
+                            .graphicsLayer { translationY = offsetY.value }
+                            .then(
+                                if (isDragEnabled) {
+                                    Modifier.dragAndDropSource {
+                                        detectTapGestures(
+                                            onTap = { onTapRow(item) },
+                                            onLongPress = {
+                                                draggingItemId = item.id
+                                                startTransfer(
+                                                    transferData = DragAndDropTransferData(
+                                                        clipData = ClipData.newPlainText(
+                                                            "draggable-item-id",
+                                                            item.id.toString()
+                                                        )
                                                     )
                                                 )
-                                            )
-                                        }
-                                    )
+                                            }
+                                        )
+                                    }
+                                } else {
+                                    Modifier
                                 }
-                            } else {
-                                Modifier
-                            }
-                        )
+                            ),
+                        verticalArrangement = Arrangement.spacedBy(DROP_INDICATOR_ROW_GAP)
                     ) {
                         val transitionDuration = 120
                         AnimatedVisibility(
@@ -316,55 +333,28 @@ fun <T : Draggable> HMDraggableList(
                             enter = expandVertically(tween(transitionDuration)),
                             exit = shrinkVertically(tween(transitionDuration)),
                         ) {
-                            DropIndicator(
-                                isTopRounded = index == 0,
-                                isBottomRounded = false
-                            )
+                            dropIndicator()
                         }
-                        itemContent(item, draggingItemId == item.id)
+                        Column(Modifier.height(rowHeight)) {
+                            itemContent(item, draggingItemId == item.id)
+                        }
                         AnimatedVisibility(
-                            visible = targetedDropIndex == index + 1,
+                            visible = isLast && targetedDropIndex == index + 1,
                             enter = expandVertically(tween(transitionDuration)),
                             exit = shrinkVertically(tween(transitionDuration)),
                         ) {
-                            DropIndicator(
-                                isTopRounded = false,
-                                isBottomRounded = index == items.size - 1
-                            )
+                            dropIndicator()
                         }
                     }
                 }
             }
+            footer?.let { it() }
         }
-        footer?.let { it() }
     }
-}
-
-/**
- * 드롭 위치를 나타내는 인디케이터
- */
-@Composable
-private fun DropIndicator(
-    isTopRounded: Boolean = false,
-    isBottomRounded: Boolean = false
-) {
-    Box(
-        modifier = Modifier
-            .padding(horizontal = 16.dp)
-            .fillMaxWidth()
-            .height(12.dp)
-            .background(
-                color = Color.Blue,
-                shape = RoundedCornerShape(
-                    topStart = if (isTopRounded) 4.dp else 0.dp,
-                    topEnd = if (isTopRounded) 4.dp else 0.dp,
-                    bottomStart = if (isBottomRounded) 4.dp else 0.dp,
-                    bottomEnd = if (isBottomRounded) 4.dp else 0.dp
-                )
-            )
-    )
 }
 
 private val SCROLL_THRESHOLD_DP = 96.dp
 private val HEADER_THRESHOLD_DP = 64.dp
+private val DROP_INDICATOR_HEIGHT = 12.dp
+private val DROP_INDICATOR_ROW_GAP = 4.dp
 private const val SCROLL_VELOCITY = 1200f
