@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.drawscope.ContentDrawScope
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.pointer.SuspendingPointerInputModifierNode
+import androidx.compose.ui.node.DelegatableNode
 import androidx.compose.ui.node.DelegatingNode
 import androidx.compose.ui.node.DrawModifierNode
 import androidx.compose.ui.node.LayoutAwareModifierNode
@@ -85,11 +86,10 @@ private class HMButtonElement(
     private val transitionType: HMButton.TransitionType,
     private val isDisabled: Boolean,
     private val action: () -> Unit,
-) : ModifierNodeElement<HMButtonModifierNode>() {
+) : ModifierNodeElement<HMButtonNode>() {
+    override fun create() = HMButtonNode(transitionType, isDisabled, action)
 
-    override fun create() = HMButtonModifierNode(transitionType, isDisabled, action)
-
-    override fun update(node: HMButtonModifierNode) {
+    override fun update(node: HMButtonNode) {
         node.update(transitionType, isDisabled, action)
     }
 
@@ -124,14 +124,11 @@ private class HMButtonElement(
  * - SuspendingPointerInputModifierNode 위임 → composed pointerInput 제거
  * - LayoutAwareModifierNode로 크기 추적 → composed onSizeChanged 제거
  */
-private class HMButtonModifierNode(
+private class HMButtonNode(
     var transitionType: HMButton.TransitionType,
     var isDisabled: Boolean,
     var action: () -> Unit,
-) : DelegatingNode(),
-    DrawModifierNode,
-    LayoutAwareModifierNode {
-
+) : DrawModifierNode, DelegatingNode(), LayoutAwareModifierNode {
     // 애니메이션 상태 (노드에 직접 저장 — remember 불필요)
     private val scale = Animatable(1f)
     private val backgroundAlpha = Animatable(0f)
@@ -151,15 +148,15 @@ private class HMButtonModifierNode(
         SuspendingPointerInputModifierNode {
             detectTapGestures(
                 onPress = { offset ->
-                    if (!this@HMButtonModifierNode.isDisabled) {
-                        this@HMButtonModifierNode.animatePress(offset)
+                    if (!this@HMButtonNode.isDisabled) {
+                        this@HMButtonNode.animatePress(offset)
                         tryAwaitRelease()
-                        this@HMButtonModifierNode.animateRelease()
+                        this@HMButtonNode.animateRelease()
                     }
                 },
                 onTap = {
-                    if (!this@HMButtonModifierNode.isDisabled) {
-                        this@HMButtonModifierNode.action()
+                    if (!this@HMButtonNode.isDisabled) {
+                        this@HMButtonNode.action()
                     }
                 }
             )
@@ -292,63 +289,5 @@ private class HMButtonModifierNode(
         private const val MAX_TILT_ANGLE = 5f
         private const val PRESS_DURATION = 100
         private const val RELEASE_DURATION = 400
-    }
-}
-
-/**
- * Preview용 machinePasswordRow 재현
- */
-object HMButtonPreview {
-    enum class TransitionType {
-        /** 인증이 필요하지 않은 API */
-        Shrink,
-        ShrinkWithTilt,
-
-        /** AccessToken이 필요한 API (대부분의 인증된 API) */
-        ShrinkWithGrayBackground,
-    }
-
-    @Composable
-    operator fun invoke(
-        modifier: Modifier = Modifier,
-        transitionType: TransitionType = TransitionType.Shrink,
-        isPressed: Boolean,
-        // ShrinkWithTilt 전용: 탭 위치에 따른 회전 각도 (-7f ~ 7f)
-        tiltX: Float = 0f,
-        tiltY: Float = 0f,
-        content: @Composable () -> Unit
-    ) {
-        val backgroundAlpha = if (isPressed) 0.3f else 0.0f
-        val scale = if (isPressed) 0.94f else 1f
-
-        Row(
-            modifier = modifier
-                .then(
-                    if (transitionType == TransitionType.ShrinkWithGrayBackground) {
-                        Modifier
-                            .background(
-                                Gray.copy(alpha = backgroundAlpha),
-                                RoundedCornerShape(8.dp)
-                            )
-                            .padding(4.dp)
-                    } else {
-                        Modifier
-                    }
-                )
-
-                .graphicsLayer {
-                    alpha = 1f - backgroundAlpha
-                    scaleX = scale
-                    scaleY = scale
-                    if (transitionType == TransitionType.ShrinkWithTilt) {
-                        rotationX = tiltX
-                        rotationY = tiltY
-                    }
-                },
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            content()
-        }
     }
 }

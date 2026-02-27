@@ -84,7 +84,6 @@ fun DragAndDropDemoView() {
         itemContent = { item, isDragging ->
             DemoItemRowContent(
                 item = item,
-                isDragging = isDragging,
                 isEditMode = true
             )
         },
@@ -101,9 +100,8 @@ fun DragAndDropDemoView() {
  * 기존 DemoItemRow의 레이아웃을 그대로 유지
  */
 @Composable
-private fun DemoItemRowContent(
+fun DemoItemRowContent(
     item: DemoItem,
-    isDragging: Boolean,
     isEditMode: Boolean
 ) {
     Row(
@@ -141,13 +139,9 @@ private fun DemoItemRowContent(
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
-                if (isDragging) "Dragging..." else item.subtitle,
+                item.subtitle,
                 style = MaterialTheme.typography.bodyMedium,
-                color = if (isDragging) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                },
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 13.sp
             )
         }
@@ -157,11 +151,7 @@ private fun DemoItemRowContent(
             Icon(
                 painter = painterResource(id = android.R.drawable.ic_menu_sort_by_size),
                 contentDescription = "Drag handle",
-                tint = if (isDragging) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                },
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(24.dp)
             )
         }

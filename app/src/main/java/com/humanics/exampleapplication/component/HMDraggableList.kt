@@ -9,7 +9,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.draganddrop.dragAndDropSource
 import androidx.compose.foundation.draganddrop.dragAndDropTarget
@@ -33,6 +32,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
@@ -42,16 +42,17 @@ import androidx.compose.ui.draganddrop.DragAndDropTransferData
 import androidx.compose.ui.draganddrop.mimeTypes
 import androidx.compose.ui.draganddrop.toAndroidDragEvent
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Color.Companion.Gray
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
-import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlin.math.abs
 
 /**
@@ -78,6 +79,7 @@ interface Draggable {
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun <T : Draggable> HMDraggableList(
+    modifier: Modifier = Modifier,
     items: List<T>,
     rowHeight: Dp,
     isDragEnabled: Boolean,
@@ -85,10 +87,9 @@ fun <T : Draggable> HMDraggableList(
     onTapRow: (T) -> Unit,
     itemContent: @Composable (T, Boolean) -> Unit,
     header: @Composable (() -> Unit)? = null,
-    footer: @Composable (() -> Unit)? = null,
-    scrollState: ScrollState = rememberScrollState(),
-    modifier: Modifier = Modifier
+    footer: @Composable (() -> Unit)? = null
 ) {
+    val scrollState = rememberScrollState()
     val density = LocalDensity.current
     val hapticFeedback = LocalHapticFeedback.current
     val overallHeightPx = with(density) { (rowHeight + DROP_INDICATOR_HEIGHT + DROP_INDICATOR_ROW_GAP).toPx() }
@@ -160,7 +161,7 @@ fun <T : Draggable> HMDraggableList(
 
     LaunchedEffect(targetedDropIndex) {
         if (prevTargetedDropIndex != targetedDropIndex && targetedDropIndex != null) {
-            hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
         }
         prevTargetedDropIndex = targetedDropIndex
     }
@@ -195,7 +196,6 @@ fun <T : Draggable> HMDraggableList(
     @Composable fun dropIndicator() {
         Box(
             modifier = Modifier
-                .padding(horizontal = 16.dp)
                 .fillMaxWidth()
                 .height(DROP_INDICATOR_HEIGHT)
                 .background(Color.Blue, RoundedCornerShape(4.dp))
@@ -271,7 +271,6 @@ fun <T : Draggable> HMDraggableList(
                 ) { it() }
             }
 
-            // Items with drop indicators + reorder animation
             items.forEachIndexed { index, item ->
                 key(item.id) {
                     // 리오더 애니메이션: 인덱스 변경 시 이전 위치에서 새 위치로 슬라이드
@@ -297,31 +296,81 @@ fun <T : Draggable> HMDraggableList(
                     }
 
                     val isLast = index==(items.size-1)
+
+                    // 눌림 효과를 위한 scale 애니메이션
+                    val scale = remember { Animatable(1f) }
+                    // Press 시 배경 alpha 애니메이션
+                    val backgroundAlpha = remember { Animatable(0f) }
+                    val coroutineScope = rememberCoroutineScope()
+
                     Column(
                         Modifier
                             .height(rowHeight+ DROP_INDICATOR_HEIGHT + DROP_INDICATOR_ROW_GAP +
                                     (if (isLast) (DROP_INDICATOR_HEIGHT + DROP_INDICATOR_ROW_GAP) else 0.dp)
                             ) // 순수 Row Height + DropIndicator
                             .fillMaxWidth()
-                            .graphicsLayer { translationY = offsetY.value }
+                            .padding(horizontal = 16.dp)
+                            .background(
+                                Gray.copy(alpha = backgroundAlpha.value),
+                                RoundedCornerShape(8.dp)
+                            )
+                            .padding(4.dp)
+                            .graphicsLayer {
+                                alpha = 1f - backgroundAlpha.value
+                                translationY = offsetY.value
+                                scaleX = scale.value
+                                scaleY = scale.value
+                            }
                             .then(
                                 if (isDragEnabled) {
-                                    Modifier.dragAndDropSource {
-                                        detectTapGestures(
-                                            onTap = { onTapRow(item) },
-                                            onLongPress = {
-                                                draggingItemId = item.id
-                                                startTransfer(
-                                                    transferData = DragAndDropTransferData(
-                                                        clipData = ClipData.newPlainText(
-                                                            "draggable-item-id",
-                                                            item.id.toString()
+                                    Modifier
+                                        .dragAndDropSource {
+                                            detectTapGestures(
+                                                onPress = {
+                                                    // Press 시작 시 축소 및 배경 표시
+                                                    coroutineScope.launch {
+                                                        scale.animateTo(
+                                                            targetValue = 0.97f,
+                                                            animationSpec = tween(100)
+                                                        )
+                                                    }
+                                                    coroutineScope.launch {
+                                                        backgroundAlpha.animateTo(
+                                                            targetValue = 0.3f,
+                                                            animationSpec = tween(100)
+                                                        )
+                                                    }
+                                                    // Press가 끝날 때까지 대기
+                                                    tryAwaitRelease()
+                                                    // Release 시 원래 크기로 복원 및 배경 숨김
+                                                    coroutineScope.launch {
+                                                        scale.animateTo(
+                                                            targetValue = 1f,
+                                                            animationSpec = tween(400)
+                                                        )
+                                                    }
+                                                    coroutineScope.launch {
+                                                        backgroundAlpha.animateTo(
+                                                            targetValue = 0f,
+                                                            animationSpec = tween(400)
+                                                        )
+                                                    }
+                                                },
+                                                onTap = { onTapRow(item) },
+                                                onLongPress = {
+                                                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                    draggingItemId = item.id
+                                                    startTransfer(
+                                                        transferData = DragAndDropTransferData(
+                                                            clipData = ClipData.newPlainText(
+                                                                "draggable-item-id",
+                                                                item.id.toString()
+                                                            )
                                                         )
                                                     )
-                                                )
-                                            }
-                                        )
-                                    }
+                                                }
+                                            )
+                                        }
                                 } else {
                                     Modifier
                                 }

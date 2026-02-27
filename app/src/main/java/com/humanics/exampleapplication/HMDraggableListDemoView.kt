@@ -179,9 +179,7 @@ fun HMDraggableListDemoView() {
             itemContent = { item, isDragging ->
                 DemoItemRowContent(
                     item = item,
-                    isDragging = isDragging,
-                    isEditMode = isEditMode,
-                    isLastTapped = lastTappedItem?.id == item.id
+                    isEditMode = isEditMode
                 )
             },
 
@@ -197,8 +195,6 @@ fun HMDraggableListDemoView() {
                     onReset = { items = generateDemoItems() }
                 )
             },
-
-            scrollState = scrollState,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
@@ -214,19 +210,8 @@ private fun DemoItemRowContent(
     item: DemoItem,
     isDragging: Boolean,
     isEditMode: Boolean,
-    isLastTapped: Boolean
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                color = when {
-                    isLastTapped -> MaterialTheme.colorScheme.primaryContainer
-                    else -> MaterialTheme.colorScheme.surface
-                },
-                shape = RoundedCornerShape(8.dp)
-            )
-            .padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
