@@ -1,32 +1,30 @@
 package com.humanics.exampleapplication.component
 
-import android.graphics.Camera
-import android.graphics.Matrix
-import android.graphics.Paint
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color.Companion.Gray
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.drawscope.ContentDrawScope
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.pointer.SuspendingPointerInputModifierNode
-import androidx.compose.ui.node.DelegatableNode
+import androidx.compose.ui.layout.Measurable
+import androidx.compose.ui.layout.MeasureResult
+import androidx.compose.ui.layout.MeasureScope
 import androidx.compose.ui.node.DelegatingNode
 import androidx.compose.ui.node.DrawModifierNode
 import androidx.compose.ui.node.LayoutAwareModifierNode
+import androidx.compose.ui.node.LayoutModifierNode
 import androidx.compose.ui.node.ModifierNodeElement
 import androidx.compose.ui.platform.InspectorInfo
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
@@ -39,7 +37,8 @@ import kotlinx.coroutines.launch
  *
  * Modifier.Node API로 최적화:
  * - 애니메이션 중 리컴포지션 제거 (remember/mutableStateOf 불필요)
- * - pointerInput, onSizeChanged, graphicsLayer, background를 단일 노드로 통합
+ * - pointerInput, onSizeChanged, graphicsLayer, background에 해당하는 기능을 단일 DelegatingNode로 통합
+ *   → modifier chain 노드 수 감소 및 노드 간 탐색 오버헤드 감소
  * - coroutineScope를 노드에서 직접 접근 (rememberCoroutineScope 불필요)
  * */
 
@@ -116,32 +115,32 @@ private class HMButtonElement(
 }
 
 /**
- * Modifier.Node: pointer input, draw(background + transform), size tracking을 단일 노드에서 처리합니다.
+ * Modifier.Node: pointer input, RenderNode 기반 transform, background, size tracking을 단일 노드에서 처리합니다.
  *
  * 최적화 포인트:
- * - Animatable 상태를 노드에 직접 저장 → remember 6개 제거
- * - DrawModifierNode로 background alpha를 draw phase에서 처리 → 리컴포지션 방지
- * - SuspendingPointerInputModifierNode 위임 → composed pointerInput 제거
- * - LayoutAwareModifierNode로 크기 추적 → composed onSizeChanged 제거
+ * - Animatable 상태를 노드에 직접 저장 → remember 4개, rememberCoroutineScope 1개, mutableStateOf 1개 제거 (Slot Table 오버헤드 제거)
+ * - LayoutModifierNode.placeWithLayer로 RenderNode 기반 GPU 변환
+ * - DrawModifierNode는 ShrinkWithGrayBackground 배경 전용 (transform 전 원본 크기)
+ * - SuspendingPointerInputModifierNode 위임으로 pointerInput 기능 통합
+ * - LayoutAwareModifierNode.onRemeasured()로 크기 추적 기능 통합
+ * - 4~5개의 개별 modifier 노드를 단일 DelegatingNode로 통합 → modifier chain 단축
  */
 private class HMButtonNode(
     var transitionType: HMButton.TransitionType,
     var isDisabled: Boolean,
     var action: () -> Unit,
-) : DrawModifierNode, DelegatingNode(), LayoutAwareModifierNode {
+) : DelegatingNode(),
+    LayoutModifierNode,         // RenderNode 기반 scale/alpha/rotation (GPU 가속)
+    DrawModifierNode,           // ShrinkWithGrayBackground 배경 전용
+    LayoutAwareModifierNode {   // 크기 추적
+
     // 애니메이션 상태 (노드에 직접 저장 — remember 불필요)
     private val scale = Animatable(1f)
     private val backgroundAlpha = Animatable(0f)
     private val tiltX = Animatable(0f)
     private val tiltY = Animatable(0f)
-
     // ShrinkWithTilt용 컴포넌트 크기 (mutableStateOf 불필요)
     private var componentSize = IntSize.Zero
-
-    // 3D 회전용 객체 (재사용하여 매 프레임 할당 방지)
-    private val camera = Camera()
-    private val cameraMatrix = Matrix()
-    private val layerPaint = Paint()
 
     // Pointer input 위임: 제스처 감지를 노드 수준에서 처리
     private val pointerInputNode = delegate(
@@ -184,62 +183,40 @@ private class HMButtonNode(
         }
     }
 
-    // DrawModifierNode: background와 transform을 draw phase에서 처리 (리컴포지션 방지)
-    override fun ContentDrawScope.draw() {
-        // Animatable.value 읽기는 draw phase에서 자동으로 추적되어 값 변경 시 invalidateDraw
-        val bgAlpha = backgroundAlpha.value
-        val currentScale = scale.value
-        val currentAlpha = 1f - bgAlpha
-        val currentTiltX = tiltX.value
-        val currentTiltY = tiltY.value
+    // LayoutModifierNode: RenderNode 기반 GPU 가속 변환
+    // placeWithLayer 내부에서 State를 읽으므로 layer invalidation만 발생 (Composition/Layout 건너뜀)
+    override fun MeasureScope.measure(
+        measurable: Measurable,
+        constraints: Constraints,
+    ): MeasureResult {
+        val placeable = measurable.measure(constraints)
+        return layout(placeable.width, placeable.height) {
+            placeable.placeWithLayer(0, 0) {
+                scaleX = this@HMButtonNode.scale.value
+                scaleY = this@HMButtonNode.scale.value
+                alpha = 1f - this@HMButtonNode.backgroundAlpha.value
+                transformOrigin = TransformOrigin.Center
 
-        // 1. ShrinkWithGrayBackground: 배경 그리기 (transform 적용 전, 원본 크기 유지)
-        if (transitionType == HMButton.TransitionType.ShrinkWithGrayBackground && bgAlpha > 0f) {
-            drawRoundRect(
-                color = Gray.copy(alpha = bgAlpha),
-                cornerRadius = CornerRadius(8.dp.toPx()),
-            )
-        }
-
-        // 2. Transform 적용 후 컨텐츠 그리기
-        val hasTransform = currentScale != 1f || currentAlpha != 1f ||
-                currentTiltX != 0f || currentTiltY != 0f
-
-        if (hasTransform) {
-            val nativeCanvas = drawContext.canvas.nativeCanvas
-            val cx = size.width / 2f
-            val cy = size.height / 2f
-
-            // Alpha 레이어 (graphicsLayer의 alpha와 동일한 효과)
-            layerPaint.alpha = (currentAlpha.coerceIn(0f, 1f) * 255).toInt()
-            nativeCanvas.saveLayer(0f, 0f, size.width, size.height, layerPaint)
-
-            // Scale (중심점 기준)
-            nativeCanvas.save()
-            nativeCanvas.translate(cx, cy)
-            nativeCanvas.scale(currentScale, currentScale)
-
-            // 3D Rotation (ShrinkWithTilt 전용)
-            if (transitionType == HMButton.TransitionType.ShrinkWithTilt &&
-                (currentTiltX != 0f || currentTiltY != 0f)
-            ) {
-                camera.save()
-                camera.rotateX(currentTiltX)
-                camera.rotateY(currentTiltY)
-                camera.getMatrix(cameraMatrix)
-                camera.restore()
-                nativeCanvas.concat(cameraMatrix)
+                if (this@HMButtonNode.transitionType == HMButton.TransitionType.ShrinkWithTilt) {
+                    rotationX = this@HMButtonNode.tiltX.value
+                    rotationY = this@HMButtonNode.tiltY.value
+                }
             }
-
-            nativeCanvas.translate(-cx, -cy)
-
-            drawContent()
-
-            nativeCanvas.restore() // scale + rotation
-            nativeCanvas.restore() // alpha layer
-        } else {
-            drawContent()
         }
+    }
+
+    // DrawModifierNode: ShrinkWithGrayBackground 배경만 처리 (transform 전 원본 크기에 그리기)
+    override fun ContentDrawScope.draw() {
+        if (transitionType == HMButton.TransitionType.ShrinkWithGrayBackground) {
+            val bgAlpha = backgroundAlpha.value
+            if (bgAlpha > 0f) {
+                drawRoundRect(
+                    color = Gray.copy(alpha = bgAlpha),
+                    cornerRadius = CornerRadius(8.dp.toPx()),
+                )
+            }
+        }
+        drawContent()
     }
 
     // Press 시작: 축소 + 배경 + tilt 애니메이션
