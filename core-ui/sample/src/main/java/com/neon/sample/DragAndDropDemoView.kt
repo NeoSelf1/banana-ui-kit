@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -23,50 +22,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.neon.core.ui.component.list.HMDraggableList
+import com.neon.core.ui.theme.Gray10
+import com.neon.core.ui.theme.Gray50
+import com.neon.core.ui.theme.Gray80
+import com.neon.core.ui.theme.HMFont
+import com.neon.core.ui.theme.Primary10
 import com.neon.sample.component.DemoItem
 import com.neon.sample.component.generateSampleItems
 
-/**
- * DragAndDropDemoView
- *
- * HMDraggableList를 사용한 드래그 앤 드롭 데모
- * iOS HMDraggableScrollView와 동일한 인터페이스 및 동작 패턴
- *
- * === iOS HMDraggableScrollView와의 대응 ===
- *
- * [인자 매핑]
- * - items: Binding<[Item]> → items: List<T> + onMoveItem 콜백
- * - rowHeight: CGFloat → rowHeight: Dp
- * - isDragEnabled: Bool → isDragEnabled: Boolean
- * - onReorder: (() -> Void)? → onReorder: () -> Unit
- * - onTapRow: (Item) -> Void → onTapRow: (T) -> Unit
- * - itemContent: (Item, Bool) -> ItemRow → itemContent: @Composable (T, Boolean) -> Unit
- * - header/footer: ViewBuilder → header/footer: @Composable (() -> Unit)?
- *
- * [DropIndicator]
- * - iOS: UnevenRoundedRectangle, .primary10, 첫/마지막 모서리 처리
- * - Android: Box + RoundedCornerShape, primary.copy(alpha = 0.3f)
- * - 위치: targetedDropIndex == index (아이템 위), == items.size (마지막 뒤)
- *
- * [프레임워크 차이로 인한 차이점]
- * - iOS: Binding으로 양방향 바인딩
- * - Android: 단방향 데이터 흐름 (List + onMoveItem 콜백)
- * - iOS: UnevenRoundedRectangle 지원
- * - Android: RoundedCornerShape만 지원 (균일한 모서리)
- */
 @Composable
 fun DragAndDropDemoView() {
-    // === 상태 관리 ===
-    // iOS의 @Binding var items와 대응
-    // Android는 단방향 데이터 흐름으로 상태 + 콜백 패턴 사용
     var items by remember { mutableStateOf(generateSampleItems()) }
 
-    // === HMDraggableList 사용 ===
     HMDraggableList(
         items = items,
         rowHeight = 80.dp,
@@ -93,12 +63,6 @@ fun DragAndDropDemoView() {
     )
 }
 
-/**
- * 아이템 행 컨텐츠
- *
- * iOS의 itemContent: (Item, Bool) -> ItemRow와 대응
- * 기존 DemoItemRow의 레이아웃을 그대로 유지
- */
 @Composable
 fun DemoItemRowContent(
     item: DemoItem,
@@ -107,7 +71,7 @@ fun DemoItemRowContent(
     Row(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface)
+            .background(Gray10)
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -115,43 +79,39 @@ fun DemoItemRowContent(
             modifier = Modifier
                 .size(48.dp)
                 .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primaryContainer),
+                .background(Primary10),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = item.iconLetter,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                fontWeight = FontWeight.Bold
+                style = HMFont.subhead3,
+                color = Gray10
             )
         }
 
         Spacer(modifier = Modifier.width(12.dp))
 
-        // 텍스트 영역
         Column(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.Center
         ) {
-            Text(item.title,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface
+            Text(
+                text = item.title,
+                style = HMFont.subhead5,
+                color = Gray80
             )
             Text(
-                item.subtitle,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 13.sp
+                text = item.subtitle,
+                style = HMFont.body4,
+                color = Gray50
             )
         }
 
-        // 드래그 핸들 아이콘 (편집 모드에서만)
         if (isEditMode) {
             Icon(
                 painter = painterResource(id = android.R.drawable.ic_menu_sort_by_size),
                 contentDescription = "Drag handle",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                tint = Gray50,
                 modifier = Modifier.size(24.dp)
             )
         }
@@ -161,7 +121,7 @@ fun DemoItemRowContent(
 @Preview(showBackground = true)
 @Composable
 private fun DragAndDropDemoViewPreview() {
-    MaterialTheme {
-        DragAndDropDemoView()
-    }
+
+    DragAndDropDemoView()
+
 }

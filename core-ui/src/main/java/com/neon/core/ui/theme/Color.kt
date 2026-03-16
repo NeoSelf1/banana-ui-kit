@@ -47,15 +47,3 @@ val SurfaceHigh = Color(0xDE000000)      // 87% alpha black
 // System Colors - iOS 에셋과 동기화
 val Warning = Color(0xFFF92642)  // R:0.976 G:0.149 B:0.259
 val Caution = Color(0xFFFF9C19)  // R:1.000 G:0.612 B:0.098
-
-// Other Colors - iOS 에셋과 동기화
-val Outline = Color(0x1F000000)  // 12% alpha black
-
-// Material Design 기본 색상 (호환성)
-val Purple200 = Color(0xFFBB86FC)
-val Purple500 = Color(0xFF6200EE)
-val Purple700 = Color(0xFF3700B3)
-val Teal200 = Color(0xFF03DAC5)
-val Teal700 = Color(0xFF018786)
-val Black = Color(0xFF000000)
-val White = Color(0xFFFFFFFF)

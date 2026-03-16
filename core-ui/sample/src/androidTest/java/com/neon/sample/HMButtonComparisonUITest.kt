@@ -7,8 +7,8 @@ import androidx.test.uiautomator.UiAutomatorTestScope
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.textAsString
 import androidx.test.uiautomator.uiAutomator
-import com.neon.sample.HMButtonComparisonPerformanceTest.Companion.LONG_CLICK_REPEAT_COUNT
-import com.neon.sample.HMButtonComparisonPerformanceTest.Companion.REPEAT_COUNT
+import com.neon.sample.HMButtonComparisonUITest.Companion.LONG_CLICK_REPEAT_COUNT
+import com.neon.sample.HMButtonComparisonUITest.Companion.REPEAT_COUNT
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -22,7 +22,7 @@ import org.junit.runner.RunWith
  */
 @RunWith(AndroidJUnit4::class)
 @LargeTest
-class HMButtonComparisonPerformanceTest {
+class HMButtonComparisonUITest {
 
     companion object {
         /** 화면 전환 후 Compose 렌더링 완료 여유시간 */
@@ -76,6 +76,9 @@ class HMButtonComparisonPerformanceTest {
     @Test
     fun scrollPerformance_hmButton_vs_hmButtonLegacy() = uiAutomator {
         startActivity(MainActivity::class.java)
+        // Navigate: Demo list → Button Comparison
+        onElement { textAsString() == DemoRoute.ButtonComparison.title }.click()
+        Thread.sleep(SCREEN_TRANSITION_WAIT_MS)
 
         val pkg = InstrumentationRegistry.getInstrumentation().targetContext.packageName
         val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
@@ -112,6 +115,9 @@ class HMButtonComparisonPerformanceTest {
     @Test
     fun longClickTransition_hmButton_vs_hmButtonLegacy() = uiAutomator {
         startActivity(MainActivity::class.java)
+        // Navigate: Demo list → Button Comparison
+        onElement { textAsString() == DemoRoute.ButtonComparison.title }.click()
+        Thread.sleep(SCREEN_TRANSITION_WAIT_MS)
 
         val pkg = InstrumentationRegistry.getInstrumentation().targetContext.packageName
         val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())

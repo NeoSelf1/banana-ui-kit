@@ -13,7 +13,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -37,6 +36,7 @@ import com.neon.core.ui.theme.Gray10
 import com.neon.core.ui.theme.Gray30
 import com.neon.core.ui.theme.Gray40
 import com.neon.core.ui.theme.Gray60
+import com.neon.core.ui.theme.Gray80
 import com.neon.core.ui.theme.HMAnimations
 import com.neon.core.ui.theme.HMFont
 import com.neon.core.ui.theme.Primary50
@@ -138,7 +138,7 @@ fun HMTextField(
             keyboardOptions = keyboardOptions,
             keyboardActions = keyboardActions,
             visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
-            cursorBrush = SolidColor(MaterialTheme.colorScheme.onSurface),
+            cursorBrush = SolidColor(Gray80),
             modifier = Modifier
                 .fillMaxWidth()
                 .onFocusChanged { setFocused(it.isFocused) }
