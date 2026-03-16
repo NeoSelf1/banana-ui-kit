@@ -15,9 +15,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.neon.core.ui.component.HMLoadingIndicator
-import com.neon.core.ui.component.HMPlaceholder
-import com.neon.core.ui.component.button.HMClickable
+import com.neon.core.ui.component.NeoLoadingIndicator
+import com.neon.core.ui.component.NeoPlaceholder
+import com.neon.core.ui.component.button.NeoClickable
 import com.neon.core.ui.component.loadingState.LoadingState
 
 /**
@@ -25,13 +25,13 @@ import com.neon.core.ui.component.loadingState.LoadingState
  *
  * [LoadingState]를 기반으로 로딩, 빈 상태, 데이터 표시, 새로고침 등 리스트의
  * 전체 생명주기를 자동으로 관리합니다. 내부적으로 [LazyColumn]을 사용하며,
- * 각 아이템은 [HMClickable]로 래핑되어 탭 애니메이션이 적용됩니다.
+ * 각 아이템은 [NeoClickable]로 래핑되어 탭 애니메이션이 적용됩니다.
  *
  * 주요 기능:
  * - [onRefresh] 제공 시 [PullToRefreshBox]가 활성화되어 당겨서 새로고침을 지원합니다.
  * - [onLoadMore] 제공 시 스크롤이 마지막 아이템에 도달하면 자동으로 추가 데이터를 요청합니다.
- * - 데이터가 없으면 [placeholderText]로 [com.neon.core.ui.component.HMPlaceholder]를 표시합니다.
- * - 로딩 중에는 [com.neon.core.ui.component.HMLoadingIndicator]를 표시합니다.
+ * - 데이터가 없으면 [placeholderText]로 [com.neon.core.ui.component.NeoPlaceholder]를 표시합니다.
+ * - 로딩 중에는 [com.neon.core.ui.component.NeoLoadingIndicator]를 표시합니다.
  * - [headerContent], [topContent], [footerContent]로 리스트 전후에 커스텀 영역을 배치할 수 있습니다.
  *
  * @param modifier 리스트에 적용할 Modifier.
@@ -42,19 +42,19 @@ import com.neon.core.ui.component.loadingState.LoadingState
  * @param onRefresh Pull-to-Refresh 시 호출되는 콜백. null이면 새로고침 비활성화.
  * @param onLoadMore 스크롤이 끝에 도달했을 때 호출되는 콜백. null이면 무한 스크롤 비활성화.
  * @param placeholderText 데이터가 비어있을 때 표시할 안내 텍스트.
- * @param tapTransition 아이템 탭 시 적용할 [HMClickable.TransitionType]. 기본값은 ShrinkWithGrayBackground.
+ * @param tapTransition 아이템 탭 시 적용할 [NeoClickable.TransitionType]. 기본값은 ShrinkWithGrayBackground.
  * @param headerContent 리스트 최상단에 표시할 컨텐츠. 스크롤과 함께 움직인다.
  * @param topContent 리스트 아이템들 위에 표시할 컨텐츠. 로드된 데이터에 접근할 수 있습니다.
  * @param footerContent 리스트 최하단에 표시할 컨텐츠.
  * @param itemContent 각 리스트 아이템을 렌더링하는 컴포저블.
  *
  * @see LoadingState
- * @see HMClickable
- * @see com.neon.core.ui.component.HMPlaceholder
+ * @see NeoClickable
+ * @see com.neon.core.ui.component.NeoPlaceholder
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun <T> HMInfinityScrollList(
+fun <T> NeoInfinityScrollList(
     modifier: Modifier = Modifier,
     state: LoadingState<List<T>>,
     hasMore: Boolean = false,
@@ -63,7 +63,7 @@ fun <T> HMInfinityScrollList(
     onRefresh: (() -> Unit)? = null,
     onLoadMore: (() -> Unit)? = null,
     placeholderText: String? = null,
-    tapTransition: HMClickable.TransitionType = HMClickable.TransitionType.ShrinkWithGrayBackground,
+    tapTransition: NeoClickable.TransitionType = NeoClickable.TransitionType.ShrinkWithGrayBackground,
     headerContent: @Composable () -> Unit = {},
     topContent: (@Composable (List<T>) -> Unit)? = null,
     footerContent: @Composable () -> Unit = {},
@@ -118,7 +118,7 @@ private fun <T> ScrollListContent(
     isLoadingMore: Boolean?,
     onLoadMore: (() -> Unit)?,
     placeholderText: String?,
-    tapTransition: HMClickable.TransitionType,
+    tapTransition: NeoClickable.TransitionType,
     headerContent: (@Composable () -> Unit)?,
     topContent: (@Composable (List<T>) -> Unit)?,
     footerContent: (@Composable () -> Unit)?,
@@ -154,7 +154,7 @@ private fun <T> ScrollListContent(
                     key = { item -> item.hashCode() }
                 ) { item ->
                     if (onTapItem != null) {
-                        HMClickable(
+                        NeoClickable(
                             Modifier.padding(horizontal = 16.dp),
                             transitionType = tapTransition,
                             action = { onTapItem(item) }
@@ -175,7 +175,7 @@ private fun <T> ScrollListContent(
                 }
                 if (isLoadingMore == true) {
                     item {
-                        HMLoadingIndicator(
+                        NeoLoadingIndicator(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(bottom = 8.dp)
@@ -199,13 +199,13 @@ private fun <T> ScrollListContent(
 
             state is LoadingState.Idle || (state is LoadingState.Loaded) || (state is LoadingState.Refreshing) -> {
                 item {
-                    HMPlaceholder(placeholderText ?: "아직 보여드릴 수 있는 내용이 없어요.")
+                    NeoPlaceholder(placeholderText ?: "아직 보여드릴 수 있는 내용이 없어요.")
                 }
             }
 
             state is LoadingState.Loading -> {
                 item {
-                    HMLoadingIndicator()
+                    NeoLoadingIndicator()
                 }
             }
         }

@@ -24,11 +24,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.neon.core.ui.component.list.HMDraggableList
+import com.neon.core.ui.component.list.NeoDraggableList
 import com.neon.core.ui.theme.Gray10
 import com.neon.core.ui.theme.Gray50
 import com.neon.core.ui.theme.Gray80
-import com.neon.core.ui.theme.HMFont
+import com.neon.core.ui.theme.NeoFont
 import com.neon.core.ui.theme.Primary10
 import com.neon.sample.component.DemoItem
 import com.neon.sample.component.generateSampleItems
@@ -37,7 +37,7 @@ import com.neon.sample.component.generateSampleItems
 fun DragAndDropDemoView() {
     var items by remember { mutableStateOf(generateSampleItems()) }
 
-    HMDraggableList(
+    NeoDraggableList(
         items = items,
         rowHeight = 80.dp,
         isDragEnabled = true,
@@ -84,7 +84,7 @@ fun DemoItemRowContent(
         ) {
             Text(
                 text = item.iconLetter,
-                style = HMFont.subhead3,
+                style = NeoFont.subhead3,
                 color = Gray10
             )
         }
@@ -97,12 +97,12 @@ fun DemoItemRowContent(
         ) {
             Text(
                 text = item.title,
-                style = HMFont.subhead5,
+                style = NeoFont.subhead5,
                 color = Gray80
             )
             Text(
                 text = item.subtitle,
-                style = HMFont.body4,
+                style = NeoFont.body4,
                 color = Gray50
             )
         }

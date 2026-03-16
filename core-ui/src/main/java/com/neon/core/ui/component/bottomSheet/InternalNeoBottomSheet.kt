@@ -45,7 +45,7 @@ import kotlin.math.roundToInt
 /**
  * Custom BottomSheet State Definition
  */
-enum class HMSheetStatus {
+enum class NeoSheetStatus {
     HIDDEN,
     ANIMATING,
     EXPANDED
@@ -58,24 +58,24 @@ enum class HMSheetStatus {
  * 이를 충족시키기 위해선 모든 public 프로퍼티가 stable 타입 즉, 기본 타입이거나 val 타입이여야 하며,
  * stable하지 않은 public 프로퍼티가 존재할 경우, 변경 시 Composition에 알림이 가야합니다..
  *
- * HMBottomSheetController는 MutableState로 var 프로퍼티의 변경을 알리고 있기에 Stable 조건을 충족합니다.
+ * NeoBottomSheetController는 MutableState로 var 프로퍼티의 변경을 알리고 있기에 Stable 조건을 충족합니다.
  * 이로써, Controller를 사용하는 Composable 내부에서 불필요한 Recomposition을 방지합니다.
  *
  *
- * [HMBottomSheetController]
+ * [NeoBottomSheetController]
  *
- * HMBottomSheetController는 기존 HMBottomSheetState와 HMCustomBottomSheetNavigator를 통합한 클래스입니다.
+ * NeoBottomSheetController는 기존 NeoBottomSheetState와 NeoCustomBottomSheetNavigator를 통합한 클래스입니다.
  * 바텀시트의 속성 저장, 관리 및 애니메이션 관리를 단일 클래스에서 담당하며, 이를 통해 다수의 LaunchedEffect로 인한 데이터 경쟁 조건을 방지합니다.
  * */
 @Stable
-class HMBottomSheetController(val scope: CoroutineScope) {
+class NeoBottomSheetController(val scope: CoroutineScope) {
 
-    // ==================== 애니메이션 상태 (기존 HMBottomSheetState) ====================
+    // ==================== 애니메이션 상태 (기존 NeoBottomSheetState) ====================
 
     /**
-     * private set - HMBottomSheetController 내장 메서드를 통해서만 변경이 가능토록 하여 예상치 못한 외부 변경을 방지
+     * private set - NeoBottomSheetController 내장 메서드를 통해서만 변경이 가능토록 하여 예상치 못한 외부 변경을 방지
      */
-    var status by mutableStateOf(HMSheetStatus.HIDDEN)
+    var status by mutableStateOf(NeoSheetStatus.HIDDEN)
         private set
 
     // 바텀시트가 완전히 펼쳐진 상태(EXPANDED)를 기준으로 얼마나 아래로 내려가 있는지(이동했는지)를 나타내는 값
@@ -94,7 +94,7 @@ class HMBottomSheetController(val scope: CoroutineScope) {
             return 1f - (offsetY.value / sheetHeightPx).coerceIn(0f, 1f)
         }
 
-    // ==================== 바텀시트 속성 (기존 HMCustomBottomSheetNavigator) ====================
+    // ==================== 바텀시트 속성 (기존 NeoCustomBottomSheetNavigator) ====================
 
     var content by mutableStateOf<@Composable () -> Unit>({})
         private set
@@ -119,40 +119,40 @@ class HMBottomSheetController(val scope: CoroutineScope) {
         if (this.sheetHeightPx != heightPx) {
             this.sheetHeightPx = heightPx
             // 애니메이션 중이면 높이만 업데이트하고 offset 조정은 스킵
-            if (status == HMSheetStatus.ANIMATING) return
+            if (status == NeoSheetStatus.ANIMATING) return
 
             // 만일 HIDDEN 상태이면, offset을 강제로 조정합니다.
-            if (status == HMSheetStatus.HIDDEN) {
+            if (status == NeoSheetStatus.HIDDEN) {
                 scope.launch {
                     offsetY.snapTo(heightPx)
                 }
-            } else if (status == HMSheetStatus.EXPANDED) {
+            } else if (status == NeoSheetStatus.EXPANDED) {
                 scope.launch {
                     offsetY.snapTo(0f)
                 }
             }
         } else {
             // 애니메이션 중이면 스킵
-            if (status == HMSheetStatus.ANIMATING) return
+            if (status == NeoSheetStatus.ANIMATING) return
 
             // 만일 status가 HIDDEN인데 offset가 height와 불일치할 경우는 offset을 강제로 heightPx에 맞춥니다.
-            if (status == HMSheetStatus.HIDDEN && offsetY.value != heightPx) {
+            if (status == NeoSheetStatus.HIDDEN && offsetY.value != heightPx) {
                 scope.launch { offsetY.snapTo(heightPx) }
             }
         }
     }
 
-    internal suspend fun animateTo(target: HMSheetStatus) {
+    internal suspend fun animateTo(target: NeoSheetStatus) {
         // 애니메이션 진행 중이거나 ANIMATING이 target으로 들어오면 무시
-        if (status == HMSheetStatus.ANIMATING) return
+        if (status == NeoSheetStatus.ANIMATING) return
 
         val targetOffset = when (target) {
-            HMSheetStatus.EXPANDED -> 0f
-            HMSheetStatus.HIDDEN -> sheetHeightPx
-            HMSheetStatus.ANIMATING -> return // ANIMATING은 target이 될 수 없음
+            NeoSheetStatus.EXPANDED -> 0f
+            NeoSheetStatus.HIDDEN -> sheetHeightPx
+            NeoSheetStatus.ANIMATING -> return // ANIMATING은 target이 될 수 없음
         }
 
-        status = HMSheetStatus.ANIMATING
+        status = NeoSheetStatus.ANIMATING
 
         try {
             offsetY.animateTo(
@@ -164,8 +164,8 @@ class HMBottomSheetController(val scope: CoroutineScope) {
             )
 
             // Ensure final value sync
-            if (target == HMSheetStatus.EXPANDED && offsetY.value != 0f) offsetY.snapTo(0f)
-            if (target == HMSheetStatus.HIDDEN && offsetY.value != sheetHeightPx) offsetY.snapTo(sheetHeightPx)
+            if (target == NeoSheetStatus.EXPANDED && offsetY.value != 0f) offsetY.snapTo(0f)
+            if (target == NeoSheetStatus.HIDDEN && offsetY.value != sheetHeightPx) offsetY.snapTo(sheetHeightPx)
         } finally {
             status = target
         }
@@ -191,7 +191,7 @@ class HMBottomSheetController(val scope: CoroutineScope) {
         content: @Composable () -> Unit
     ) {
         // 애니메이션 진행 중이면 무시
-        if (status == HMSheetStatus.ANIMATING) return
+        if (status == NeoSheetStatus.ANIMATING) return
 
         // 속성 설정
         this.height = height
@@ -203,43 +203,43 @@ class HMBottomSheetController(val scope: CoroutineScope) {
 
         // 애니메이션 시작
         scope.launch {
-            animateTo(HMSheetStatus.EXPANDED)
+            animateTo(NeoSheetStatus.EXPANDED)
         }
     }
 
-    /** 자식뷰의 ViewModel 비즈니스 로직을 통해 HMBottomSheet에 주입되는 isPresent가 false로 변경되면,
-     * HMCustomBottomSheetProvider가 이를 감지하여 hide()를 호출합니다.
+    /** 자식뷰의 ViewModel 비즈니스 로직을 통해 NeoBottomSheet에 주입되는 isPresent가 false로 변경되면,
+     * NeoCustomBottomSheetProvider가 이를 감지하여 hide()를 호출합니다.
      *  */
     fun hide() {
         // 애니메이션 진행 중이면 무시
-        if (status == HMSheetStatus.ANIMATING) return
+        if (status == NeoSheetStatus.ANIMATING) return
 
         scope.launch {
-            animateTo(HMSheetStatus.HIDDEN)
+            animateTo(NeoSheetStatus.HIDDEN)
         }
     }
 
-    // Called by the HMCustomBottomSheet (UI) when it is dismissed by User Interaction
+    // Called by the NeoCustomBottomSheet (UI) when it is dismissed by User Interaction
     internal fun onSheetDismiss() {
         // 애니메이션 진행 중이면 무시
-        if (status == HMSheetStatus.ANIMATING) return
+        if (status == NeoSheetStatus.ANIMATING) return
 
 
         scope.launch {
-            animateTo(HMSheetStatus.HIDDEN)
+            animateTo(NeoSheetStatus.HIDDEN)
             onDismissCallback?.invoke()
         }
     }
 
     internal fun onTapSheetBackNavBtn() {
         // 애니메이션 진행 중이면 무시
-        if (status == HMSheetStatus.ANIMATING) return
+        if (status == NeoSheetStatus.ANIMATING) return
         onTapBackNavBtnCallback?.invoke()
     }
 
     // 드래그 완료 후 상태 결정 및 애니메이션 처리
     internal fun handleDragEnd(velocityY: Float) {
-        if (status == HMSheetStatus.ANIMATING) return
+        if (status == NeoSheetStatus.ANIMATING) return
 
         val currentY = offsetY.value
         val thresholdVelocity = 500f // arbitrary threshold for "Fast"
@@ -247,16 +247,16 @@ class HMBottomSheetController(val scope: CoroutineScope) {
         val isFlingUp = velocityY < -thresholdVelocity
 
         val target = if (isFlingDown) {
-            HMSheetStatus.HIDDEN
+            NeoSheetStatus.HIDDEN
         } else if (isFlingUp) {
-            HMSheetStatus.EXPANDED
+            NeoSheetStatus.EXPANDED
         } else {
-            if (currentY > sheetHeightPx / 2) HMSheetStatus.HIDDEN else HMSheetStatus.EXPANDED // Distance based
+            if (currentY > sheetHeightPx / 2) NeoSheetStatus.HIDDEN else NeoSheetStatus.EXPANDED // Distance based
         }
 
         scope.launch {
             animateTo(target)
-            if (target == HMSheetStatus.HIDDEN) {
+            if (target == NeoSheetStatus.HIDDEN) {
                 onDismissCallback?.invoke()
             }
         }
@@ -278,7 +278,7 @@ class HMBottomSheetController(val scope: CoroutineScope) {
 }
 
 /**
- * InternalHMBottomSheet
+ * InternalNeoBottomSheet
  * (View)
  * 역할: 실제 UI 컴포넌트입니다. 드래그 애니메이션, 레이아웃, 모양, Scrim(배경 어두워짐) 등 **"어떻게 보여질지"**를 담당합니다.
  * 필요성: 이 파일이 없으면 바텀시트 화면 자체가 존재하지 않다.
@@ -286,8 +286,8 @@ class HMBottomSheetController(val scope: CoroutineScope) {
  * Controller에서 관리하는 속성을 기반으로 UI만 렌더링합니다.
  */
 @Composable
-fun InternalHMBottomSheet(
-    controller: HMBottomSheetController,
+fun InternalNeoBottomSheet(
+    controller: NeoBottomSheetController,
     content: @Composable () -> Unit
 ) {
     val density = LocalDensity.current
@@ -297,17 +297,17 @@ fun InternalHMBottomSheet(
     val fullSheetHeight = controller.height + navBottomPadding
     val sheetHeightPx = with(density) { fullSheetHeight.toPx() }
 
-    // HMBottomSheet가 포함된 자식뷰가 구성될 때, 자식뷰에서 정의한 height는 controller에 의해 이곳으로 주입되며 이에 맞춰 Px로 변환됩니다.
+    // NeoBottomSheet가 포함된 자식뷰가 구성될 때, 자식뷰에서 정의한 height는 controller에 의해 이곳으로 주입되며 이에 맞춰 Px로 변환됩니다.
     // Composition 시점에 동기적으로 높이 업데이트 (LaunchedEffect 제거로 경쟁 조건 방지)
     controller.updateSheetHeight(sheetHeightPx)
 
     // offsetY 변경 시 슬라이드 콜백 호출
     controller.dispatchSlide()
 
-    if (controller.status != HMSheetStatus.HIDDEN) {
+    if (controller.status != NeoSheetStatus.HIDDEN) {
         // BackHandler inside the sheet composition ensures it's always registered
         // after NavHost's BackHandler, giving it higher priority
-        BackHandler(enabled = controller.status != HMSheetStatus.HIDDEN) {
+        BackHandler(enabled = controller.status != NeoSheetStatus.HIDDEN) {
             controller.onTapSheetBackNavBtn()
         }
 
@@ -315,7 +315,7 @@ fun InternalHMBottomSheet(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.BottomCenter
         ) {
-            if (controller.status != HMSheetStatus.HIDDEN || controller.offsetY.value < controller.sheetHeightPx) {
+            if (controller.status != NeoSheetStatus.HIDDEN || controller.offsetY.value < controller.sheetHeightPx) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()

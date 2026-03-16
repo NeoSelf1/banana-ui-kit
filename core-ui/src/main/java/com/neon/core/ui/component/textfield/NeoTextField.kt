@@ -31,14 +31,14 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import com.neon.core.ui.component.HMIcon
+import com.neon.core.ui.component.NeoIcon
 import com.neon.core.ui.theme.Gray10
 import com.neon.core.ui.theme.Gray30
 import com.neon.core.ui.theme.Gray40
 import com.neon.core.ui.theme.Gray60
 import com.neon.core.ui.theme.Gray80
-import com.neon.core.ui.theme.HMAnimations
-import com.neon.core.ui.theme.HMFont
+import com.neon.core.ui.theme.NeoAnimations
+import com.neon.core.ui.theme.NeoFont
 import com.neon.core.ui.theme.Primary50
 
 /**
@@ -64,11 +64,11 @@ import com.neon.core.ui.theme.Primary50
  * @param keyboardOptions 키보드 유형 및 IME 액션 설정.
  * @param keyboardActions IME 액션 수행 시 호출되는 콜백.
  *
- * @see HMAuthTextField
- * @see HMSearchTextField
+ * @see NeoAuthTextField
+ * @see NeoSearchTextField
  */
 @Composable
-fun HMTextField(
+fun NeoTextField(
     modifier: Modifier = Modifier,
     value: String,
     onValueChange: (String) -> Unit,
@@ -93,8 +93,8 @@ fun HMTextField(
 
     val borderColor by animateColorAsState(
         targetValue = if (isFocused) Primary50 else Gray30,
-        animationSpec = HMAnimations.colorMediumTween(),
-        label = "hmTextFieldBorderColor"
+        animationSpec = NeoAnimations.colorMediumTween(),
+        label = "neoTextFieldBorderColor"
     )
 
     val clearButtonScale by animateFloatAsState(
@@ -122,7 +122,7 @@ fun HMTextField(
         contentAlignment = Alignment.CenterEnd
     ) {
         if (value.isEmpty()) {
-            Text(placeholder, Modifier.align(Alignment.CenterStart), style = HMFont.subhead6, color = Gray40)
+            Text(placeholder, Modifier.align(Alignment.CenterStart), style = NeoFont.subhead6, color = Gray40)
         }
 
         BasicTextField(
@@ -134,7 +134,7 @@ fun HMTextField(
                 }
             },
             singleLine = true,
-            textStyle = HMFont.subhead6,
+            textStyle = NeoFont.subhead6,
             keyboardOptions = keyboardOptions,
             keyboardActions = keyboardActions,
             visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
@@ -145,7 +145,7 @@ fun HMTextField(
         )
 
         if (isDeleteButtonPresent) {
-            HMIcon(
+            NeoIcon(
                 Modifier.padding(8.dp).scale(clearButtonScale),
                 name = "close_sm",
                 color = Gray60

@@ -39,13 +39,12 @@ Multi-module Android Jetpack Compose project. `core-ui` is a reusable UI compone
 
 Reusable UI components, theme, and utilities:
 
-- **component/list/** — `HMDraggableList` (generic drag-and-drop), `HMInfinityScrollList` (pull-to-refresh + infinite scroll), `Draggable` interface
-- **component/button/** — `HMClickable` (Modifier.Node optimized tap animation), `HMKeyboardButton` (keyboard-attached action button)
-- **component/textfield/** — `HMTextField`, `HMSearchTextField`
-- **component/bottomSheet/** — `HMBottomSheet` (declarative global bottom sheet with Provider/Controller/View pattern)
+- **component/list/** — `NeoDraggableList` (generic drag-and-drop), `NeoInfinityScrollList` (pull-to-refresh + infinite scroll), `Draggable` interface
+- **component/button/** — `NeoClickable` (Modifier.Node optimized tap animation), `NeoKeyboardButton` (keyboard-attached action button)
+- **component/textfield/** — `NeoTextField`, `NeoSearchTextField`
+- **component/bottomSheet/** — `NeoBottomSheet` (declarative global bottom sheet with Provider/Controller/View pattern)
 - **component/loadingState/** — `LoadingState<T>` sealed class, `ItemLoadingState<ID>`
-- **component/** — `HMPicker`, `HMBackHeader`, `HMDivider`, `HMIcon`, `HMLoadingIndicator`, `HMPlaceholder`, `HMScreen`, `HMToggle`
-- **theme/** — `HumaniaTheme`, `HMFont` (Pretendard typography), `HMAnimations`, Color palette
+- **component/** — `NeoPicker`, `NeoBackHeader`, `NeoDivider`, `NeoIcon`, `NeoLoadingIndicator`, `NeoPlaceholder`, `NeoScreen`, `NeoToggle`
 - **image/** — `SvgImageLoader` (Coil SVG singleton)
 - **modifier/** — `dropShadow` (custom shadow with blur/spread)
 - **infrastructure/** — `RecompositionTracker`
@@ -54,11 +53,11 @@ Reusable UI components, theme, and utilities:
 
 Demo views and performance tests:
 
-- `HMDraggableListDemoView` — Drag-and-drop demo with edit mode, counters, header/footer
+- `NeoDraggableListDemoView` — Drag-and-drop demo with edit mode, counters, header/footer
 - `DragAndDropDemoView` — Simple DnD demo using `DragAndDropListState`
-- `HMButtonComparisonDemoView` — `HMClickable` vs `HMButtonLegacy` performance comparison
-- `HMPickerDemoView` — Picker demo with selection counter
-- `HMButtonLegacy` / `HMPickerLegacy` — Legacy implementations for benchmarking
+- `NeoButtonComparisonDemoView` — `NeoClickable` vs `NeoButtonLegacy` performance comparison
+- `NeoPickerDemoView` — Picker demo with selection counter
+- `NeoButtonLegacy` / `NeoPickerLegacy` — Legacy implementations for benchmarking
 - Instrumented tests: button performance, list scroll performance, picker UI test
 
 ## Conventions

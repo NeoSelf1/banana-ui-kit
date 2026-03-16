@@ -41,7 +41,7 @@ import kotlinx.coroutines.launch
 import kotlin.math.abs
 
 @Composable
-fun HMPickerLegacy(
+fun NeoPickerLegacy(
     modifier: Modifier = Modifier,
     items: List<String>,
     initialItem: String,

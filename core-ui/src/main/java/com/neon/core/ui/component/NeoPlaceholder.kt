@@ -13,7 +13,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.min
 import com.neon.core.ui.theme.Gray50
-import com.neon.core.ui.theme.HMFont
+import com.neon.core.ui.theme.NeoFont
 
 /**
  * 데이터가 없을 때 표시되는 빈 상태 플레이스홀더 컴포넌트.
@@ -22,15 +22,15 @@ import com.neon.core.ui.theme.HMFont
  * 화면 높이의 18%를 기준으로 동적 상단 패딩을 계산하여 (최소 80.dp, 최대 200.dp),
  * 다양한 화면 크기에서 자연스러운 위치에 표시되도록 합니다.
  *
- * 주로 HMScrollList에서 빈 리스트 상태이거나, 검색 결과가 없을 때 사용됩니다.
+ * 주로 NeoScrollList에서 빈 리스트 상태이거나, 검색 결과가 없을 때 사용됩니다.
  *
  * @param text 표시할 안내 텍스트. 중앙 정렬됩니다.
  * @param modifier 플레이스홀더 컨테이너에 적용할 Modifier.
  *
- * @see com.neon.core.ui.component.list.HMInfinityScrollList
+ * @see com.neon.core.ui.component.list.NeoInfinityScrollList
  */
 @Composable
-fun HMPlaceholder(
+fun NeoPlaceholder(
     text: String,
     modifier: Modifier = Modifier
 ) {
@@ -44,6 +44,6 @@ fun HMPlaceholder(
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        Text(text, modifier.padding(top = dynamicTopPadding), style = HMFont.subhead6, color = Gray50, textAlign = TextAlign.Center)
+        Text(text, modifier.padding(top = dynamicTopPadding), style = NeoFont.subhead6, color = Gray50, textAlign = TextAlign.Center)
     }
 }

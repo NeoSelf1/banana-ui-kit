@@ -28,14 +28,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.neon.core.ui.theme.Gray10
-import com.neon.core.ui.theme.HMFont
+import com.neon.core.ui.theme.NeoFont
 import com.neon.core.ui.theme.Primary50
 
 enum class DemoRoute(val title: String) {
-    DraggableList("HMDraggableList"),
+    DraggableList("NeoDraggableList"),
     DragAndDrop("DragAndDrop"),
-    ButtonComparison("HMButton Comparison"),
-    Picker("HMPicker"),
+    ButtonComparison("NeoButton Comparison"),
+    Picker("NeoPicker"),
 }
 
 class MainActivity : ComponentActivity() {
@@ -62,10 +62,10 @@ fun DemoNavHost() {
     } else {
         BackHandler { currentRoute = null }
         when (currentRoute) {
-            DemoRoute.DraggableList -> HMDraggableListDemoView()
+            DemoRoute.DraggableList -> NeoDraggableListDemoView()
             DemoRoute.DragAndDrop -> DragAndDropDemoView()
-            DemoRoute.ButtonComparison -> HMButtonComparisonDemoView()
-            DemoRoute.Picker -> HMPickerDemoView()
+            DemoRoute.ButtonComparison -> NeoButtonComparisonDemoView()
+            DemoRoute.Picker -> NeoPickerDemoView()
             null -> {}
         }
     }
@@ -80,7 +80,7 @@ private fun DemoList(onNavigate: (DemoRoute) -> Unit) {
     ) {
         Text(
             text = "Core UI Samples",
-            style = HMFont.headline2,
+            style = NeoFont.headline2,
             modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
         )
         HorizontalDivider()
@@ -97,11 +97,11 @@ private fun DemoList(onNavigate: (DemoRoute) -> Unit) {
                 ) {
                     Text(
                         text = route.title,
-                        style = HMFont.subhead4
+                        style = NeoFont.subhead4
                     )
                     Text(
                         text = "›",
-                        style = HMFont.subhead4,
+                        style = NeoFont.subhead4,
                         color = Primary50
                     )
                 }

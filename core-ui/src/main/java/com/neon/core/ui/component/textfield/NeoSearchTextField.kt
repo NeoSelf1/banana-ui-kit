@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.dp
 import com.neon.core.ui.theme.Gray15
 import com.neon.core.ui.theme.Gray45
 import com.neon.core.ui.theme.Gray80
-import com.neon.core.ui.theme.HMFont
+import com.neon.core.ui.theme.NeoFont
 
 /**
  * 검색 전용 텍스트 입력 필드 컴포넌트.
@@ -30,7 +30,7 @@ import com.neon.core.ui.theme.HMFont
  * 40.dp 높이의 둥근 모서리(8.dp) 입력 필드로, [Gray15] 배경색을 가지며
  * 테두리가 없는 플랫한 스타일이다. 검색바 UI에 적합하도록 설계되었다.
  *
- * [HMTextField]와 달리 포커스 애니메이션이나 테두리 강조가 없으며,
+ * [NeoTextField]와 달리 포커스 애니메이션이나 테두리 강조가 없으며,
  * 배경색만으로 영역을 구분합니다. 텍스트가 비어있을 때 [placeholder]가 [Gray45] 색상으로 표시됩니다.
  *
  * @param modifier 검색 필드 컨테이너에 적용할 Modifier.
@@ -39,10 +39,10 @@ import com.neon.core.ui.theme.HMFont
  * @param placeholder 텍스트가 비어있을 때 표시되는 힌트 텍스트.
  * @param textFieldModifier 내부 BasicTextField에 직접 적용할 Modifier.
  *
- * @see HMTextField
+ * @see NeoTextField
  */
 @Composable
-fun HMSearchTextField(
+fun NeoSearchTextField(
     modifier: Modifier = Modifier,
     value: String,
     onValueChange: (String) -> Unit,
@@ -78,7 +78,7 @@ fun HMSearchTextField(
         contentAlignment = Alignment.CenterStart
     ) {
         if (value.isEmpty()) {
-            Text(placeholder, style = HMFont.body2, color = Gray45)
+            Text(placeholder, style = NeoFont.body2, color = Gray45)
         }
 
         BasicTextField(
@@ -87,7 +87,7 @@ fun HMSearchTextField(
                 textFieldValue = newValue
                 onValueChange(newValue.text)
             },
-            textStyle = HMFont.subhead6.copy(color = Gray80),
+            textStyle = NeoFont.subhead6.copy(color = Gray80),
             singleLine = true,
             modifier = textFieldModifier.fillMaxWidth()
         )

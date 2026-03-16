@@ -27,24 +27,24 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import com.neon.core.ui.component.button.HMClickable
+import com.neon.core.ui.component.button.NeoClickable
 import com.neon.core.ui.theme.Gray50
 import com.neon.core.ui.theme.Gray80
-import com.neon.core.ui.theme.HMFont
+import com.neon.core.ui.theme.NeoFont
 import com.neon.core.ui.theme.Primary10
 import com.neon.core.ui.theme.Primary50
-import com.neon.sample.component.HMButtonLegacy
+import com.neon.sample.component.NeoButtonLegacy
 
 private const val BUTTON_COUNT = 60
 
 private enum class Screen {
     Menu,
-    HMButton, HMButtonLegacy,
-    SingleHMButton, SingleHMButtonLegacy,
+    NeoButton, NeoButtonLegacy,
+    SingleNeoButton, SingleNeoButtonLegacy,
 }
 
 @Composable
-fun HMButtonComparisonDemoView() {
+fun NeoButtonComparisonDemoView() {
     var currentScreen by remember { mutableStateOf(Screen.Menu) }
 
     when (currentScreen) {
@@ -58,26 +58,26 @@ fun HMButtonComparisonDemoView() {
             ) {
                 Text(
                     text = "Button Performance Test",
-                    style = HMFont.headline3,
+                    style = NeoFont.headline3,
                 )
                 Spacer(Modifier.height(32.dp))
                 Button(
-                    onClick = { currentScreen = Screen.HMButtonLegacy },
+                    onClick = { currentScreen = Screen.NeoButtonLegacy },
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text("HMButtonLegacy")
+                    Text("NeoButtonLegacy")
                 }
                 Spacer(Modifier.height(12.dp))
                 Button(
-                    onClick = { currentScreen = Screen.HMButton },
+                    onClick = { currentScreen = Screen.NeoButton },
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text("HMButton")
+                    Text("NeoButton")
                 }
                 Spacer(Modifier.height(24.dp))
                 Text(
                     text = "Single Button (LongClick Test)",
-                    style = HMFont.subhead3,
+                    style = NeoFont.subhead3,
                 )
                 Spacer(Modifier.height(12.dp))
                 Row(
@@ -85,13 +85,13 @@ fun HMButtonComparisonDemoView() {
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     Button(
-                        onClick = { currentScreen = Screen.SingleHMButtonLegacy },
+                        onClick = { currentScreen = Screen.SingleNeoButtonLegacy },
                         modifier = Modifier.weight(1f),
                     ) {
                         Text("Single Legacy")
                     }
                     Button(
-                        onClick = { currentScreen = Screen.SingleHMButton },
+                        onClick = { currentScreen = Screen.SingleNeoButton },
                         modifier = Modifier.weight(1f),
                     ) {
                         Text("Single Node")
@@ -100,30 +100,30 @@ fun HMButtonComparisonDemoView() {
             }
         }
 
-        Screen.HMButton -> {
+        Screen.NeoButton -> {
             BackHandler { currentScreen = Screen.Menu }
-            HMButtonScrollList()
+            NeoButtonScrollList()
         }
 
-        Screen.HMButtonLegacy -> {
+        Screen.NeoButtonLegacy -> {
             BackHandler { currentScreen = Screen.Menu }
-            HMButtonLegacyScrollList()
+            NeoButtonLegacyScrollList()
         }
 
-        Screen.SingleHMButton -> {
+        Screen.SingleNeoButton -> {
             BackHandler { currentScreen = Screen.Menu }
-            SingleHMButtonScreen()
+            SingleNeoButtonScreen()
         }
 
-        Screen.SingleHMButtonLegacy -> {
+        Screen.SingleNeoButtonLegacy -> {
             BackHandler { currentScreen = Screen.Menu }
-            SingleHMButtonLegacyScreen()
+            SingleNeoButtonLegacyScreen()
         }
     }
 }
 
 @Composable
-private fun HMButtonScrollList() {
+private fun NeoButtonScrollList() {
     val scrollState = rememberScrollState()
     Column(
         modifier = Modifier
@@ -133,10 +133,10 @@ private fun HMButtonScrollList() {
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         repeat(BUTTON_COUNT) { index ->
-            HMClickable(
+            NeoClickable(
                 modifier = Modifier.fillMaxWidth(),
                 action = {},
-                transitionType = HMClickable.TransitionType.ShrinkWithGrayBackground,
+                transitionType = NeoClickable.TransitionType.ShrinkWithGrayBackground,
             ) {
                 ButtonItemContent(index = index, transitionTypeName = "ShrinkWithGrayBackground")
             }
@@ -145,7 +145,7 @@ private fun HMButtonScrollList() {
 }
 
 @Composable
-private fun HMButtonLegacyScrollList() {
+private fun NeoButtonLegacyScrollList() {
     val scrollState = rememberScrollState()
     Column(
         modifier = Modifier
@@ -155,10 +155,10 @@ private fun HMButtonLegacyScrollList() {
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         repeat(BUTTON_COUNT) { index ->
-            HMButtonLegacy(
+            NeoButtonLegacy(
                 modifier = Modifier.fillMaxWidth(),
                 action = {},
-                transitionType = HMButtonLegacy.TransitionType.ShrinkWithGrayBackground,
+                transitionType = NeoButtonLegacy.TransitionType.ShrinkWithGrayBackground,
             ) {
                 ButtonItemContent(index = index, transitionTypeName = "ShrinkWithGrayBackground")
             }
@@ -167,17 +167,17 @@ private fun HMButtonLegacyScrollList() {
 }
 
 @Composable
-private fun SingleHMButtonScreen() {
+private fun SingleNeoButtonScreen() {
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center,
     ) {
-        HMClickable(
+        NeoClickable(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp),
             action = {},
-            transitionType = HMClickable.TransitionType.ShrinkWithGrayBackground,
+            transitionType = NeoClickable.TransitionType.ShrinkWithGrayBackground,
         ) {
             ButtonItemContent(index = 0, transitionTypeName = "ShrinkWithGrayBackground")
         }
@@ -185,17 +185,17 @@ private fun SingleHMButtonScreen() {
 }
 
 @Composable
-private fun SingleHMButtonLegacyScreen() {
+private fun SingleNeoButtonLegacyScreen() {
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center,
     ) {
-        HMButtonLegacy(
+        NeoButtonLegacy(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp),
             action = {},
-            transitionType = HMButtonLegacy.TransitionType.ShrinkWithGrayBackground,
+            transitionType = NeoButtonLegacy.TransitionType.ShrinkWithGrayBackground,
         ) {
             ButtonItemContent(index = 0, transitionTypeName = "ShrinkWithGrayBackground")
         }
@@ -219,7 +219,7 @@ private fun ButtonItemContent(index: Int, transitionTypeName: String) {
         ) {
             Text(
                 text = "${index + 1}",
-                style = HMFont.subhead5,
+                style = NeoFont.subhead5,
                 color = Primary50
             )
         }
@@ -227,12 +227,12 @@ private fun ButtonItemContent(index: Int, transitionTypeName: String) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = "Button ${index + 1}",
-                style = HMFont.subhead5,
+                style = NeoFont.subhead5,
                 color = Gray80
             )
             Text(
                 text = transitionTypeName,
-                style = HMFont.body4,
+                style = NeoFont.body4,
                 color = Gray50
             )
         }

@@ -91,7 +91,7 @@ interface Draggable {
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun <T : Draggable> HMDraggableList(
+fun <T : Draggable> NeoDraggableList(
     modifier: Modifier = Modifier,
     items: List<T>,
     rowHeight: Dp,

@@ -25,7 +25,7 @@ import com.neon.core.ui.theme.Gray10
  * 화면 레이아웃의 공통 관심사를 일괄적으로 처리합니다. 모든 화면은 이 컴포넌트를
  * 최상위 컨테이너로 사용하여 일관된 레이아웃 구조를 유지해야 합니다.
  *
- * [isLoading]이 true이면 컨텐츠 위에 [HMLoadingIndicator]가 오버레이로 표시됩니다.
+ * [isLoading]이 true이면 컨텐츠 위에 [NeoLoadingIndicator]가 오버레이로 표시됩니다.
  * [onTapToHideIME]가 제공되면 imePadding이 자동 적용되고, 빈 영역 탭 시 키보드가 숨겨진다.
  *
  * @param modifier 바텀탭과 함께 Column에서 사용할 경우 Modifier.weight(1f)를 전달하여
@@ -39,12 +39,12 @@ import com.neon.core.ui.theme.Gray10
  *        일반적으로 focusManager.clearFocus()를 전달합니다.
  * @param content 화면 본문 컨텐츠. ColumnScope 내에서 구성됩니다.
  *
- * @see HMLoadingIndicator
- * @see HMBackHeader
+ * @see NeoLoadingIndicator
+ * @see NeoBackHeader
  */
 
 @Composable
-fun HMScreen(
+fun NeoScreen(
     modifier: Modifier = Modifier.navigationBarsPadding(),
     isAlignCenter: Boolean = false,
     horizontalPadding: Dp = 16.dp,
@@ -78,7 +78,7 @@ fun HMScreen(
                 Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                HMLoadingIndicator()
+                NeoLoadingIndicator()
             }
         }
     }

@@ -20,14 +20,14 @@ import androidx.compose.ui.unit.min
  * 화면 높이의 18%를 기준으로 동적 상단 패딩을 계산하여 (최소 80.dp, 최대 200.dp),
  * 다양한 화면 크기에서 시각적으로 적절한 위치에 표시되도록 합니다.
  *
- * 단독으로 사용하거나 [HMScreen]의 isLoading 상태와 함께 사용할 수 있습니다.
+ * 단독으로 사용하거나 [NeoScreen]의 isLoading 상태와 함께 사용할 수 있습니다.
  *
  * @param modifier 인디케이터 컨테이너에 적용할 Modifier.
  *
- * @see HMScreen
+ * @see NeoScreen
  */
 @Composable
-fun HMLoadingIndicator(modifier: Modifier = Modifier) {
+fun NeoLoadingIndicator(modifier: Modifier = Modifier) {
     val configuration = LocalConfiguration.current
     val screenHeight = configuration.screenHeightDp.dp
 

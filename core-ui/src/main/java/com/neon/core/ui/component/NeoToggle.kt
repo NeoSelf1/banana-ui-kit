@@ -17,7 +17,7 @@ import androidx.compose.ui.graphics.Color
  * @param modifier 토글에 적용할 Modifier.
  */
 @Composable
-fun HMToggle(
+fun NeoToggle(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier

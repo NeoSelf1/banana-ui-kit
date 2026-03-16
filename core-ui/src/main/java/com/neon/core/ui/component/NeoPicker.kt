@@ -59,7 +59,7 @@ import kotlinx.coroutines.launch
  * @param content 각 아이템을 렌더링하는 컴포저블. (아이템 문자열, 선택 여부)가 전달됩니다.
  */
 @Composable
-fun HMPicker(
+fun NeoPicker(
     modifier: Modifier = Modifier,
     items: List<String>,
     initialItem: String,

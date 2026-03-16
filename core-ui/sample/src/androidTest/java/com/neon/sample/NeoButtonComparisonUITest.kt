@@ -7,13 +7,13 @@ import androidx.test.uiautomator.UiAutomatorTestScope
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.textAsString
 import androidx.test.uiautomator.uiAutomator
-import com.neon.sample.HMButtonComparisonUITest.Companion.LONG_CLICK_REPEAT_COUNT
-import com.neon.sample.HMButtonComparisonUITest.Companion.REPEAT_COUNT
+import com.neon.sample.NeoButtonComparisonUITest.Companion.LONG_CLICK_REPEAT_COUNT
+import com.neon.sample.NeoButtonComparisonUITest.Companion.REPEAT_COUNT
 import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * HMButton (Modifier.Node 최적화) vs HMButtonLegacy (standard Compose)
+ * NeoButton (Modifier.Node 최적화) vs NeoButtonLegacy (standard Compose)
  * 스크롤 렌더링 성능을 gfxinfo 메트릭으로 비교하는 테스트
  *
  * 각 하위 화면에서 동일한 스크롤 사이클을 반복하고, systemBack으로
@@ -22,7 +22,7 @@ import org.junit.runner.RunWith
  */
 @RunWith(AndroidJUnit4::class)
 @LargeTest
-class HMButtonComparisonUITest {
+class NeoButtonComparisonUITest {
 
     companion object {
         /** 화면 전환 후 Compose 렌더링 완료 여유시간 */
@@ -47,15 +47,15 @@ class HMButtonComparisonUITest {
         /** longClick 유지 시간 (press 애니메이션 100ms + 유지) */
         private const val LONG_CLICK_DURATION_MS = 600L
 
-        /** release 애니메이션 완료 대기 (HMButton RELEASE_DURATION = 400ms) */
+        /** release 애니메이션 완료 대기 (NeoButton RELEASE_DURATION = 400ms) */
         private const val RELEASE_ANIMATION_WAIT_MS = 500L
 
         /** 단일 버튼 longClick 반복 측정 횟수 */
         private const val LONG_CLICK_REPEAT_COUNT = 20
 
-        // HMButtonComparisonDemoView 메뉴 버튼 라벨
-        private const val BUTTON_OPTIMIZED = "HMButton"
-        private const val BUTTON_LEGACY = "HMButtonLegacy"
+        // NeoButtonComparisonDemoView 메뉴 버튼 라벨
+        private const val BUTTON_OPTIMIZED = "NeoButton"
+        private const val BUTTON_LEGACY = "NeoButtonLegacy"
         private const val BUTTON_SINGLE_LEGACY = "Single Legacy"
         private const val BUTTON_SINGLE_NODE = "Single Node"
     }
@@ -67,14 +67,14 @@ class HMButtonComparisonUITest {
     )
 
     /**
-     * HMButton vs HMButtonLegacy 스크롤 성능 비교
+     * NeoButton vs NeoButtonLegacy 스크롤 성능 비교
      *
      * 각 버튼의 하위 화면에 진입하여 [REPEAT_COUNT]회 스크롤 사이클 후 gfxinfo 수집,
      * systemBack으로 메뉴 복귀하여 Compose 트리를 완전히 해제한 뒤
      * 다음 화면에 진입합니다. 이를 통해 캐시 영향을 제거합니다.
      */
     @Test
-    fun scrollPerformance_hmButton_vs_hmButtonLegacy() = uiAutomator {
+    fun scrollPerformance_neoButton_vs_neoButtonLegacy() = uiAutomator {
         startActivity(MainActivity::class.java)
         // Navigate: Demo list → Button Comparison
         onElement { textAsString() == DemoRoute.ButtonComparison.title }.click()
@@ -83,7 +83,7 @@ class HMButtonComparisonUITest {
         val pkg = InstrumentationRegistry.getInstrumentation().targetContext.packageName
         val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
 
-        // ── Phase 1: HMButtonLegacy (Standard Compose) ──
+        // ── Phase 1: NeoButtonLegacy (Standard Compose) ──
         val legacyData = measureScreenScrollPerformance(
             device = device,
             pkg = pkg,
@@ -94,7 +94,7 @@ class HMButtonComparisonUITest {
         device.pressBack()
         Thread.sleep(SCREEN_TRANSITION_WAIT_MS)
 
-        // ── Phase 2: HMButton (Modifier.Node 최적화) ──
+        // ── Phase 2: NeoButton (Modifier.Node 최적화) ──
         val optimizedData = measureScreenScrollPerformance(
             device = device,
             pkg = pkg,
@@ -113,7 +113,7 @@ class HMButtonComparisonUITest {
      * systemBack으로 Compose 트리를 완전히 해제한 뒤 다음 화면에 진입합니다.
      */
     @Test
-    fun longClickTransition_hmButton_vs_hmButtonLegacy() = uiAutomator {
+    fun longClickTransition_neoButton_vs_neoButtonLegacy() = uiAutomator {
         startActivity(MainActivity::class.java)
         // Navigate: Demo list → Button Comparison
         onElement { textAsString() == DemoRoute.ButtonComparison.title }.click()
@@ -122,7 +122,7 @@ class HMButtonComparisonUITest {
         val pkg = InstrumentationRegistry.getInstrumentation().targetContext.packageName
         val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
 
-        // ── Phase 1: HMButtonLegacy (Standard Compose) ──
+        // ── Phase 1: NeoButtonLegacy (Standard Compose) ──
         val legacyData = measureSingleButtonLongClickPerformance(
             device = device,
             pkg = pkg,
@@ -133,7 +133,7 @@ class HMButtonComparisonUITest {
         device.pressBack()
         Thread.sleep(SCREEN_TRANSITION_WAIT_MS)
 
-        // ── Phase 2: HMButton (Modifier.Node 최적화) ──
+        // ── Phase 2: NeoButton (Modifier.Node 최적화) ──
         val optimizedData = measureSingleButtonLongClickPerformance(
             device = device,
             pkg = pkg,
@@ -261,7 +261,7 @@ class HMButtonComparisonUITest {
         val tag = "[ButtonPerfComparison]"
 
         println("$tag ════════════════════════════════════════")
-        println("$tag  HMButton (Modifier.Node) Results")
+        println("$tag  NeoButton (Modifier.Node) Results")
         println("$tag ════════════════════════════════════════")
         optimizedData.forEachIndexed { i, d ->
             println("$tag  #${i + 1}  Total: ${d.totalFrames}, Janky: ${d.jankyCount}, P99: ${d.p99Frames}ms")
@@ -272,7 +272,7 @@ class HMButtonComparisonUITest {
         println("$tag  AVG Total: ${"%.2f".format(optAvgTotal)}, AVG Janky: ${"%.2f".format(optAvgJanky)}, AVG P99: ${"%.2f".format(optAvgP99)}ms")
 
         println("$tag ════════════════════════════════════════")
-        println("$tag  HMButtonLegacy (Standard Compose) Results")
+        println("$tag  NeoButtonLegacy (Standard Compose) Results")
         println("$tag ════════════════════════════════════════")
         legacyData.forEachIndexed { i, d ->
             println("$tag  #${i + 1}  Total: ${d.totalFrames}, Janky: ${d.jankyCount}, P99: ${d.p99Frames}ms")
@@ -310,7 +310,7 @@ class HMButtonComparisonUITest {
         val tag = "[LongClickPerfComparison]"
 
         println("$tag ════════════════════════════════════════")
-        println("$tag  HMButton (Modifier.Node) — LongClick Transition")
+        println("$tag  NeoButton (Modifier.Node) — LongClick Transition")
         println("$tag ════════════════════════════════════════")
         optimizedData.forEachIndexed { i, d ->
             println("$tag  #${i + 1}  Total: ${d.totalFrames}, Janky: ${d.jankyCount}, P99: ${d.p99Frames}ms")
@@ -321,7 +321,7 @@ class HMButtonComparisonUITest {
         println("$tag  AVG Total: ${"%.2f".format(optAvgTotal)}, AVG Janky: ${"%.2f".format(optAvgJanky)}, AVG P99: ${"%.2f".format(optAvgP99)}ms")
 
         println("$tag ════════════════════════════════════════")
-        println("$tag  HMButtonLegacy (Standard Compose) — LongClick Transition")
+        println("$tag  NeoButtonLegacy (Standard Compose) — LongClick Transition")
         println("$tag ════════════════════════════════════════")
         legacyData.forEachIndexed { i, d ->
             println("$tag  #${i + 1}  Total: ${d.totalFrames}, Janky: ${d.jankyCount}, P99: ${d.p99Frames}ms")

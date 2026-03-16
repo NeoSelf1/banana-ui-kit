@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.Dp
  * - mediumSpring   ~= 300ms
  * Prefer Tween for duration-based subtle UI fades/moves, and Spring for scale/punchy effects.
  */
-object HMAnimations {
+object NeoAnimations {
     // Duration-based tweens (typed helpers for inference)
     fun fadeFastTween() = tween<Float>(durationMillis = 100, easing = FastOutSlowInEasing as Easing)
     fun fadeMediumFastTween() = tween<Float>(durationMillis = 200, easing = FastOutSlowInEasing as Easing)

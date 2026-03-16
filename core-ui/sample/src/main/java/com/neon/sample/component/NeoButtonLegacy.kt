@@ -31,7 +31,7 @@ import kotlinx.coroutines.launch
  * Press 시 scale과 배경 애니메이션이 적용됩니다.
  * */
 
-object HMButtonLegacy {
+object NeoButtonLegacy {
     enum class TransitionType {
         // 크기가 줄어드는 효과만 제공합니다. 영역이 명확하게 정의된 대부분의 버튼에 적용합니다.
         Shrink,

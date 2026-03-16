@@ -34,19 +34,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.neon.core.ui.component.list.HMDraggableList
+import com.neon.core.ui.component.list.NeoDraggableList
 import com.neon.core.ui.theme.Gray10
 import com.neon.core.ui.theme.Gray20
 import com.neon.core.ui.theme.Gray50
 import com.neon.core.ui.theme.Gray80
-import com.neon.core.ui.theme.HMFont
+import com.neon.core.ui.theme.NeoFont
 import com.neon.core.ui.theme.Primary10
 import com.neon.core.ui.theme.Primary50
 import com.neon.sample.component.DemoItem
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HMDraggableListDemoView() {
+fun NeoDraggableListDemoView() {
     var items by remember { mutableStateOf(generateDemoItems()) }
     var isEditMode by remember { mutableStateOf(true) }
     var reorderCount by remember { mutableIntStateOf(0) }
@@ -59,10 +59,10 @@ fun HMDraggableListDemoView() {
             TopAppBar(
                 title = {
                     Column {
-                        Text("HMDraggableList Demo", style = HMFont.subhead3)
+                        Text("NeoDraggableList Demo", style = NeoFont.subhead3)
                         Text(
                             text = "Reorders: $reorderCount",
-                            style = HMFont.body4,
+                            style = NeoFont.body4,
                             color = Gray50
                         )
                     }
@@ -70,7 +70,7 @@ fun HMDraggableListDemoView() {
                 actions = {
                     Text(
                         text = if (isEditMode) "Edit" else "View",
-                        style = HMFont.body2,
+                        style = NeoFont.body2,
                         modifier = Modifier.padding(end = 8.dp)
                     )
                     Switch(
@@ -96,7 +96,7 @@ fun HMDraggableListDemoView() {
         }
     ) { paddingValues ->
 
-        HMDraggableList(
+        NeoDraggableList(
             items = items,
             rowHeight = 80.dp,
             isDragEnabled = isEditMode,
@@ -155,7 +155,7 @@ private fun DemoItemRowContent(
         ) {
             Text(
                 text = item.iconLetter,
-                style = HMFont.subhead3,
+                style = NeoFont.subhead3,
                 color = Gray10
             )
         }
@@ -166,12 +166,12 @@ private fun DemoItemRowContent(
         ) {
             Text(
                 text = item.title,
-                style = HMFont.subhead5,
+                style = NeoFont.subhead5,
                 color = Gray80
             )
             Text(
                 text = if (isDragging) "Dragging..." else item.subtitle,
-                style = HMFont.body4,
+                style = NeoFont.body4,
                 color = if (isDragging) Primary50 else Gray50
             )
         }
@@ -199,7 +199,7 @@ private fun DemoHeader(itemCount: Int) {
     ) {
         Text(
             text = "Total Items: $itemCount",
-            style = HMFont.subhead5,
+            style = NeoFont.subhead5,
             color = Gray50
         )
     }
@@ -243,6 +243,6 @@ private fun generateDemoItems(): List<DemoItem> {
 
 @Preview(showBackground = true)
 @Composable
-private fun HMDraggableListDemoViewPreview() {
-    HMDraggableListDemoView()
+private fun NeoDraggableListDemoViewPreview() {
+    NeoDraggableListDemoView()
 }

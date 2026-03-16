@@ -21,6 +21,6 @@ import com.neon.core.ui.theme.Gray15
  * @param color 구분선의 배경색. 기본값은 [Gray15].
  */
 @Composable
-fun HMDivider(modifier: Modifier = Modifier, color: Color = Gray15) {
+fun NeoDivider(modifier: Modifier = Modifier, color: Color = Gray15) {
     Row(modifier.fillMaxWidth().height(8.dp).background(color)){}
 }

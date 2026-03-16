@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.dp
 import com.neon.core.ui.theme.Gray10
 import com.neon.core.ui.theme.Gray25
 import com.neon.core.ui.theme.Gray70
-import com.neon.core.ui.theme.HMFont
+import com.neon.core.ui.theme.NeoFont
 import com.neon.core.ui.theme.Primary50
 
 /**
@@ -40,10 +40,10 @@ import com.neon.core.ui.theme.Primary50
  * @param isDisabled true이면 비활성화 스타일을 적용하고 클릭을 비활성화.
  * @param onTap 버튼 탭 시 호출되는 콜백.
  *
- * @see HMScreen
+ * @see NeoScreen
  */
 @Composable
-fun HMKeyboardButton(
+fun NeoKeyboardButton(
     modifier: Modifier = Modifier,
     text: String,
     isLoading: Boolean = false,
@@ -75,7 +75,7 @@ fun HMKeyboardButton(
             .clickable(enabled = !isDisabled && !isLoading) { onTap() },
         contentAlignment = Alignment.Center
     ) {
-        Text(text, Modifier.alpha(textAlpha), style = HMFont.subhead4, color = textColor)
+        Text(text, Modifier.alpha(textAlpha), style = NeoFont.subhead4, color = textColor)
         
         if (isLoading) {
             CircularProgressIndicator(

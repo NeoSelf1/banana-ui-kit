@@ -20,15 +20,15 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.neon.core.ui.component.HMPicker
+import com.neon.core.ui.component.NeoPicker
 import com.neon.core.ui.theme.Gray50
 import com.neon.core.ui.theme.Gray80
-import com.neon.core.ui.theme.HMFont
+import com.neon.core.ui.theme.NeoFont
 
 private val PICKER_ITEMS = (1..30).map { it.toString() }
 
 @Composable
-fun HMPickerDemoView() {
+fun NeoPickerDemoView() {
     var selectedValue by remember { mutableStateOf("1") }
     var selectionCount by remember { mutableIntStateOf(0) }
 
@@ -37,8 +37,8 @@ fun HMPickerDemoView() {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "HMPicker Demo",
-            style = HMFont.headline3,
+            text = "NeoPicker Demo",
+            style = NeoFont.headline3,
             modifier = Modifier.testTag("picker_title")
         )
 
@@ -46,7 +46,7 @@ fun HMPickerDemoView() {
 
         Text(
             text = "선택: $selectedValue",
-            style = HMFont.subhead1,
+            style = NeoFont.subhead1,
             modifier = Modifier.testTag("selected_value")
         )
 
@@ -54,7 +54,7 @@ fun HMPickerDemoView() {
 
         Text(
             text = "선택 변경 횟수: $selectionCount",
-            style = HMFont.body2,
+            style = NeoFont.body2,
             color = Gray50,
             modifier = Modifier.testTag("selection_count")
         )
@@ -65,7 +65,7 @@ fun HMPickerDemoView() {
 
         Spacer(Modifier.weight(1f))
 
-        HMPicker(
+        NeoPicker(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(220.dp)
@@ -90,7 +90,7 @@ fun HMPickerDemoView() {
 private fun PickerItemContent(text: String, isSelected: Boolean) {
     Text(
         text = text,
-        style = if (isSelected) HMFont.subhead3 else HMFont.body2,
+        style = if (isSelected) NeoFont.subhead3 else NeoFont.body2,
         color = if (isSelected) Gray80 else Gray50,
         textAlign = TextAlign.Center,
         modifier = Modifier.testTag("picker_item_$text")
@@ -99,6 +99,6 @@ private fun PickerItemContent(text: String, isSelected: Boolean) {
 
 @Preview(showBackground = true)
 @Composable
-private fun HMPickerDemoViewPreview() {
-    HMPickerDemoView()
+private fun NeoPickerDemoViewPreview() {
+    NeoPickerDemoView()
 }

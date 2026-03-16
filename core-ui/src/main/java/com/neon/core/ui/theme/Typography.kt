@@ -15,8 +15,8 @@ val Pretendard = FontFamily(
     Font(R.font.pretendard_bold, FontWeight.Bold)
 )
 
-// 자체 Typography 네임스페이스 - iOS HMFont와 동일한 방식
-object HMFont {
+// 자체 Typography 네임스페이스 - iOS NeoFont와 동일한 방식
+object NeoFont {
     val headline1 = TextStyle(fontFamily = Pretendard, fontWeight = FontWeight.Bold, fontSize = 36.sp, letterSpacing = 0.sp)
     val headline2 = TextStyle(fontFamily = Pretendard, fontWeight = FontWeight.Bold, fontSize = 30.sp, letterSpacing = 0.sp)
     val headline3 = TextStyle(fontFamily = Pretendard, fontWeight = FontWeight.Bold, fontSize = 28.sp, letterSpacing = 0.sp)

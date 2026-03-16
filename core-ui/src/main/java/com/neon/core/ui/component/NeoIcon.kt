@@ -46,7 +46,7 @@ import com.neon.core.ui.theme.Primary50
  * @param onTap 아이콘 탭 시 호출되는 선택적 콜백. null이면 클릭 불가.
  */
 @Composable
-fun HMIcon(
+fun NeoIcon(
     modifier: Modifier = Modifier,
     name: String,
     sizeDp: Dp = 36.dp,
@@ -102,8 +102,8 @@ fun HMIcon(
 
 @Preview
 @Composable
-private fun HMIconPreview() {
-    HMIcon(
+private fun NeoIconPreview() {
+    NeoIcon(
         name = "hello",
         isBadgeVisible = true
     )

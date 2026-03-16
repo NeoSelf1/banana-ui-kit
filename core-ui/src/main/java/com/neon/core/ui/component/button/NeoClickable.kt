@@ -45,7 +45,7 @@ import kotlinx.coroutines.launch
  * Press 시 100ms 동안 0.97 스케일로 축소되고, Release 시 400ms 동안 원래 크기로 복원됩니다.
  *
  * 내부적으로 Modifier.Node API를 사용하여 애니메이션 중 리컴포지션을 완전히 제거합니다.
- * pointerInput, draw, layout 감지를 단일 노드(HMClickableModifierNode)로 통합하여
+ * pointerInput, draw, layout 감지를 단일 노드(NeoClickableModifierNode)로 통합하여
  * remember, mutableStateOf, rememberCoroutineScope 없이 애니메이션을 처리합니다.
  *
  * @param modifier 바깥 여백을 padding으로 조절해주세요.
@@ -59,7 +59,7 @@ import kotlinx.coroutines.launch
  * @see TransitionType
  */
 
-object HMClickable {
+object NeoClickable {
     enum class TransitionType {
         Shrink,
         ShrinkWithTilt,
@@ -77,7 +77,7 @@ object HMClickable {
     ) {
         Row(
             modifier = modifier
-                .then(HMClickableElement(transitionType, isDisabled, action))
+                .then(NeoClickableElement(transitionType, isDisabled, action))
                 .then(
                     if (transitionType == TransitionType.ShrinkWithGrayBackground)
                         Modifier.padding(4.dp)
@@ -93,16 +93,16 @@ object HMClickable {
 }
 
 /**
- * [ModifierNodeElement]: HMClickableModifierNode의 생성 및 업데이트를 관리합니다.
+ * [ModifierNodeElement]: NeoClickableModifierNode의 생성 및 업데이트를 관리합니다.
  */
-private class HMClickableElement(
-    private val transitionType: HMClickable.TransitionType,
+private class NeoClickableElement(
+    private val transitionType: NeoClickable.TransitionType,
     private val isDisabled: Boolean,
     private val action: () -> Unit,
-) : ModifierNodeElement<HMClickableNode>() {
-    override fun create() = HMClickableNode(transitionType, isDisabled, action)
+) : ModifierNodeElement<NeoClickableNode>() {
+    override fun create() = NeoClickableNode(transitionType, isDisabled, action)
 
-    override fun update(node: HMClickableNode) {
+    override fun update(node: NeoClickableNode) {
         node.update(transitionType, isDisabled, action)
     }
 
@@ -115,14 +115,14 @@ private class HMClickableElement(
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is HMClickableElement) return false
+        if (other !is NeoClickableElement) return false
         return transitionType == other.transitionType &&
                 isDisabled == other.isDisabled &&
                 action == other.action
     }
 
     override fun InspectorInfo.inspectableProperties() {
-        name = "hmButton"
+        name = "neoButton"
         properties["transitionType"] = transitionType
         properties["isDisabled"] = isDisabled
     }
@@ -139,8 +139,8 @@ private class HMClickableElement(
  * - LayoutAwareModifierNode.onRemeasured()로 크기 추적 기능 통합
  * - 4~5개의 개별 modifier 노드를 단일 DelegatingNode로 통합 → modifier chain 단축
  */
-private class HMClickableNode(
-    var transitionType: HMClickable.TransitionType,
+private class NeoClickableNode(
+    var transitionType: NeoClickable.TransitionType,
     var isDisabled: Boolean,
     var action: () -> Unit,
 ) : DelegatingNode(),
@@ -161,15 +161,15 @@ private class HMClickableNode(
         SuspendingPointerInputModifierNode {
             detectTapGestures(
                 onPress = { offset ->
-                    if (!this@HMClickableNode.isDisabled) {
-                        this@HMClickableNode.animatePress(offset)
+                    if (!this@NeoClickableNode.isDisabled) {
+                        this@NeoClickableNode.animatePress(offset)
                         tryAwaitRelease()
-                        this@HMClickableNode.animateRelease()
+                        this@NeoClickableNode.animateRelease()
                     }
                 },
                 onTap = {
-                    if (!this@HMClickableNode.isDisabled) {
-                        this@HMClickableNode.action()
+                    if (!this@NeoClickableNode.isDisabled) {
+                        this@NeoClickableNode.action()
                     }
                 }
             )
@@ -177,7 +177,7 @@ private class HMClickableNode(
     )
 
     fun update(
-        newTransitionType: HMClickable.TransitionType,
+        newTransitionType: NeoClickable.TransitionType,
         newIsDisabled: Boolean,
         newAction: () -> Unit,
     ) {
@@ -192,7 +192,7 @@ private class HMClickableNode(
 
     // LayoutAwareModifierNode: ShrinkWithTilt용 크기 추적
     override fun onRemeasured(size: IntSize) {
-        if (transitionType == HMClickable.TransitionType.ShrinkWithTilt) {
+        if (transitionType == NeoClickable.TransitionType.ShrinkWithTilt) {
             componentSize = size
         }
     }
@@ -206,14 +206,14 @@ private class HMClickableNode(
         val placeable = measurable.measure(constraints)
         return layout(placeable.width, placeable.height) {
             placeable.placeWithLayer(0, 0) {
-                scaleX = this@HMClickableNode.scale.value
-                scaleY = this@HMClickableNode.scale.value
-                alpha = 1f - this@HMClickableNode.backgroundAlpha.value
+                scaleX = this@NeoClickableNode.scale.value
+                scaleY = this@NeoClickableNode.scale.value
+                alpha = 1f - this@NeoClickableNode.backgroundAlpha.value
                 transformOrigin = TransformOrigin.Center
 
-                if (this@HMClickableNode.transitionType == HMClickable.TransitionType.ShrinkWithTilt) {
-                    rotationX = this@HMClickableNode.tiltX.value
-                    rotationY = this@HMClickableNode.tiltY.value
+                if (this@NeoClickableNode.transitionType == NeoClickable.TransitionType.ShrinkWithTilt) {
+                    rotationX = this@NeoClickableNode.tiltX.value
+                    rotationY = this@NeoClickableNode.tiltY.value
                 }
             }
         }
@@ -221,7 +221,7 @@ private class HMClickableNode(
 
     // DrawModifierNode: ShrinkWithGrayBackground 배경만 처리 (transform 전 원본 크기에 그리기)
     override fun ContentDrawScope.draw() {
-        if (transitionType == HMClickable.TransitionType.ShrinkWithGrayBackground) {
+        if (transitionType == NeoClickable.TransitionType.ShrinkWithGrayBackground) {
             val bgAlpha = backgroundAlpha.value
             if (bgAlpha > 0f) {
                 drawRoundRect(
@@ -242,7 +242,7 @@ private class HMClickableNode(
             scale.animateTo(SCALE_TARGET, tween(PRESS_DURATION))
         }
 
-        if (transitionType == HMClickable.TransitionType.ShrinkWithTilt && componentSize != IntSize.Zero) {
+        if (transitionType == NeoClickable.TransitionType.ShrinkWithTilt && componentSize != IntSize.Zero) {
             // 탭 위치를 중심점 기준 상대 좌표로 변환 (-1.0 ~ 1.0)
             val centerX = componentSize.width / 2f
             val centerY = componentSize.height / 2f
@@ -268,7 +268,7 @@ private class HMClickableNode(
         coroutineScope.launch { scale.animateTo(1f, tween(RELEASE_DURATION)) }
         coroutineScope.launch { backgroundAlpha.animateTo(0f, tween(RELEASE_DURATION)) }
 
-        if (transitionType == HMClickable.TransitionType.ShrinkWithTilt) {
+        if (transitionType == NeoClickable.TransitionType.ShrinkWithTilt) {
             coroutineScope.launch { tiltX.animateTo(0f, tween(RELEASE_DURATION)) }
             coroutineScope.launch { tiltY.animateTo(0f, tween(RELEASE_DURATION)) }
         }

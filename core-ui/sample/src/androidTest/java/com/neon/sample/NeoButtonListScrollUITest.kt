@@ -6,19 +6,19 @@ import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.textAsString
 import androidx.test.uiautomator.uiAutomator
-import com.neon.sample.HMButtonListScrollUITest.Companion.REPEAT_COUNT
+import com.neon.sample.NeoButtonListScrollUITest.Companion.REPEAT_COUNT
 import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * HMButton 리스트 스크롤 성능 반복 측정 테스트
+ * NeoButton 리스트 스크롤 성능 반복 측정 테스트
  *
- * ButtonComparison 데모 내 HMButton 스크롤 리스트에서
+ * ButtonComparison 데모 내 NeoButton 스크롤 리스트에서
  * 반복 스크롤 사이클을 수행하고 Janky Frame / P99 프레임 시간을 수집합니다.
  */
 @RunWith(AndroidJUnit4::class)
 @LargeTest
-class HMButtonListScrollUITest {
+class NeoButtonListScrollUITest {
     companion object {
         private const val SCREEN_TRANSITION_WAIT_MS = 800L
         private const val SCROLL_SETTLE_MS = 300L
@@ -33,16 +33,16 @@ class HMButtonListScrollUITest {
     )
 
     /**
-     * HMButton 리스트에서 반복 스크롤 사이클을 [REPEAT_COUNT]회 수행하며
+     * NeoButton 리스트에서 반복 스크롤 사이클을 [REPEAT_COUNT]회 수행하며
      * 각 사이클의 Janky Frame 수와 P99 프레임 시간을 출력합니다.
      */
     @Test
-    fun hmButtonList_repeatedScroll_jankyFramesAndP99() = uiAutomator {
+    fun neoButtonList_repeatedScroll_jankyFramesAndP99() = uiAutomator {
         startActivity(MainActivity::class.java)
-        // Navigate: Demo list → Button Comparison → HMButton scroll list
+        // Navigate: Demo list → Button Comparison → NeoButton scroll list
         onElement { textAsString() == DemoRoute.ButtonComparison.title }.click()
         Thread.sleep(SCREEN_TRANSITION_WAIT_MS)
-        onElement { textAsString() == "HMButton" }.click()
+        onElement { textAsString() == "NeoButton" }.click()
         Thread.sleep(SCREEN_TRANSITION_WAIT_MS)
 
         val pkg = InstrumentationRegistry.getInstrumentation().targetContext.packageName

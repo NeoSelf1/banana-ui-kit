@@ -12,7 +12,7 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 @LargeTest
-class HMPickerUITest {
+class NeoPickerUITest {
     companion object {
         private const val SCROLL_SETTLE_MS = 400L
         private const val LAUNCH_SETTLE_MS = 3000L
@@ -69,7 +69,7 @@ class HMPickerUITest {
         val p99Frames = parseP99FrameTimeMs(gfxInfo)
         val jankyRate = if (totalFrames > 0) (jankyCount * 100.0 / totalFrames) else 0.0
 
-        println("=== HMPicker Scroll Performance ===")
+        println("=== NeoPicker Scroll Performance ===")
         println("Total frames: $totalFrames")
         println("Janky frames: $jankyCount")
         println("Janky rate: ${"%.2f".format(jankyRate)}%")
