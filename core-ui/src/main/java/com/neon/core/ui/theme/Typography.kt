@@ -1,0 +1,40 @@
+package com.neon.core.ui.theme
+
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import com.neon.core.ui.R
+
+// iOS와 동일한 Pretendard 폰트 패밀리 정의
+val Pretendard = FontFamily(
+    Font(R.font.pretendard_regular, FontWeight.Normal),
+    Font(R.font.pretendard_medium, FontWeight.Medium),
+    Font(R.font.pretendard_semibold, FontWeight.SemiBold),
+    Font(R.font.pretendard_bold, FontWeight.Bold)
+)
+
+// 자체 Typography 네임스페이스 - iOS HMFont와 동일한 방식
+object HMFont {
+    val headline1 = TextStyle(fontFamily = Pretendard, fontWeight = FontWeight.Bold, fontSize = 36.sp, letterSpacing = 0.sp)
+    val headline2 = TextStyle(fontFamily = Pretendard, fontWeight = FontWeight.Bold, fontSize = 30.sp, letterSpacing = 0.sp)
+    val headline3 = TextStyle(fontFamily = Pretendard, fontWeight = FontWeight.Bold, fontSize = 28.sp, letterSpacing = 0.sp)
+    val headline4 = TextStyle(fontFamily = Pretendard, fontWeight = FontWeight.Bold, fontSize = 26.sp, letterSpacing = 0.sp)
+    val headline5 = TextStyle(fontFamily = Pretendard, fontWeight = FontWeight.Bold, fontSize = 24.sp, letterSpacing = 0.sp)
+    val headline6 = TextStyle(fontFamily = Pretendard, fontWeight = FontWeight.Bold, fontSize = 22.sp, letterSpacing = 0.sp)
+
+    val subhead1 = TextStyle(fontFamily = Pretendard, fontWeight = FontWeight.Bold, fontSize = 20.sp, letterSpacing = 0.sp)
+    val subhead2 = TextStyle(fontFamily = Pretendard, fontWeight = FontWeight.Medium, fontSize = 20.sp, letterSpacing = 0.sp)
+    val subhead3 = TextStyle(fontFamily = Pretendard, fontWeight = FontWeight.Bold, fontSize = 18.sp, letterSpacing = 0.15.sp)
+    val subhead4 = TextStyle(fontFamily = Pretendard, fontWeight = FontWeight.Medium, fontSize = 18.sp, letterSpacing = 0.15.sp)
+    val subhead5 = TextStyle(fontFamily = Pretendard, fontWeight = FontWeight.Bold, fontSize = 16.sp, letterSpacing = 0.1.sp)
+    val subhead6 = TextStyle(fontFamily = Pretendard, fontWeight = FontWeight.Medium, fontSize = 16.sp, letterSpacing = 0.5.sp)
+
+    val body1 = TextStyle(fontFamily = Pretendard, fontWeight = FontWeight.Bold, fontSize = 14.sp, letterSpacing = 0.25.sp)
+    val body2 = TextStyle(fontFamily = Pretendard, fontWeight = FontWeight.Medium, fontSize = 14.sp, letterSpacing = 0.25.sp)
+    val body3 = TextStyle(fontFamily = Pretendard, fontWeight = FontWeight.Bold, fontSize = 13.sp, letterSpacing = 0.4.sp)
+    val body4 = TextStyle(fontFamily = Pretendard, fontWeight = FontWeight.Medium, fontSize = 13.sp, letterSpacing = 0.4.sp)
+    val body5 = TextStyle(fontFamily = Pretendard, fontWeight = FontWeight.Bold, fontSize = 10.sp, letterSpacing = 0.4.sp)
+    val body6 = TextStyle(fontFamily = Pretendard, fontWeight = FontWeight.Medium, fontSize = 10.sp, letterSpacing = 0.4.sp)
+}

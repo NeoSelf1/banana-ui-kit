@@ -5,17 +5,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Build & Test Commands
 
 ```bash
-# Build
+# Build core-ui library
+./gradlew :core-ui:assembleDebug
+
+# Build sample app
+./gradlew :core-ui:sample:assembleDebug
+
+# Run core-ui unit tests (DraggableListLogicTest)
+./gradlew :core-ui:testDebugUnitTest
+
+# Run sample unit tests
+./gradlew :core-ui:sample:testDebugUnitTest
+
+# Run sample instrumented tests (requires connected device/emulator)
+./gradlew :core-ui:sample:connectedAndroidTest
+
+# Build all
 ./gradlew assembleDebug
-
-# Run unit tests
-./gradlew test
-
-# Run a single unit test class
-./gradlew testDebugUnitTest --tests "com.humanics.exampleapplication.ExampleUnitTest"
-
-# Run instrumented tests (requires connected device/emulator)
-./gradlew connectedAndroidTest
 
 # Lint
 ./gradlew lint
@@ -23,32 +29,41 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Android Jetpack Compose practice project focused on **drag-and-drop list reordering** and **optimized button components**. Single-module app (`app/`), package: `com.humanics.exampleapplication`.
+Multi-module Android Jetpack Compose project. `core-ui` is a reusable UI component library, `core-ui/sample` is a demo app that showcases the components.
 
-**SDK:** minSdk 24, targetSdk 35, compileSdk 35, JVM 11. Compose BOM 2024.12.01, Kotlin 2.0.21.
+**SDK:** minSdk 24, targetSdk 35, compileSdk 35, JVM 17. Compose BOM 2024.12.01, Kotlin 2.0.21.
 
-## Architecture
+## Module Structure
 
-### Core Components (`component/`)
+### `:core-ui` — Library module (`com.neon.core.ui`)
 
-- **HMDraggableList** — Generic `<T : Draggable>` composable for drag-and-drop reordering. Uses `Column + verticalScroll` (not LazyColumn) to avoid scroll position issues during reorder. Frame-synchronized auto-scrolling via `withFrameNanos`. Callback-based: `onReorder`, `onTapRow`, `onMoveItem`. Supports header/footer slots.
+Reusable UI components, theme, and utilities:
 
-- **HMButton** — Uses Modifier.Node API (`DrawModifierNode`) to eliminate recompositions during press animation. Supports three transition types: Shrink, ShrinkWithTilt, ShrinkWithGrayBackground. The legacy version (`HMButtonLegacy`) is kept as a reference.
+- **component/list/** — `HMDraggableList` (generic drag-and-drop), `HMInfinityScrollList` (pull-to-refresh + infinite scroll), `Draggable` interface
+- **component/button/** — `HMClickable` (Modifier.Node optimized tap animation), `HMKeyboardButton` (keyboard-attached action button)
+- **component/textfield/** — `HMTextField`, `HMSearchTextField`
+- **component/bottomSheet/** — `HMBottomSheet` (declarative global bottom sheet with Provider/Controller/View pattern)
+- **component/loadingState/** — `LoadingState<T>` sealed class, `ItemLoadingState<ID>`
+- **component/** — `HMPicker`, `HMBackHeader`, `HMDivider`, `HMIcon`, `HMLoadingIndicator`, `HMPlaceholder`, `HMScreen`, `HMToggle`
+- **theme/** — `HumaniaTheme`, `HMFont` (Pretendard typography), `HMAnimations`, Color palette
+- **image/** — `SvgImageLoader` (Coil SVG singleton)
+- **modifier/** — `dropShadow` (custom shadow with blur/spread)
+- **infrastructure/** — `RecompositionTracker`
 
-- **DragAndDropListState** — Helper for simple DnD state management (used by `DragAndDropDemoView`).
+### `:core-ui:sample` — Application module (`com.neon.sample`)
 
-### Data Model (`model/`)
+Demo views and performance tests:
 
-`Draggable` interface (requires `id: Int`) implemented by `DemoItem`. Any item used with `HMDraggableList` must implement `Draggable`.
-
-### Demo Views
-
-- `HMDraggableListDemoView` — Full-featured demo using `HMDraggableList` with edit mode, counters, header/footer.
-- `DragAndDropDemoView` — Simpler DnD demo using `DragAndDropListState`.
+- `HMDraggableListDemoView` — Drag-and-drop demo with edit mode, counters, header/footer
+- `DragAndDropDemoView` — Simple DnD demo using `DragAndDropListState`
+- `HMButtonComparisonDemoView` — `HMClickable` vs `HMButtonLegacy` performance comparison
+- `HMPickerDemoView` — Picker demo with selection counter
+- `HMButtonLegacy` / `HMPickerLegacy` — Legacy implementations for benchmarking
+- Instrumented tests: button performance, list scroll performance, picker UI test
 
 ## Conventions
 
 - Commit messages are in Korean, prefixed with type: `fix:`, `refactor:`, `delete:`, `feat:`
 - Dependencies managed via `gradle/libs.versions.toml` version catalog
-- No third-party UI libraries; only AndroidX/Compose dependencies
+- core-ui uses Coil for SVG rendering; sample has no additional third-party UI libraries
 - Constants for magic numbers are defined at file top level (e.g., `SCROLL_THRESHOLD_DP`, `SCROLL_VELOCITY`)

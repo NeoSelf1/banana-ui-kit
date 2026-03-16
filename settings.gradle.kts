@@ -19,6 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "ExampleApplication"
-include(":app")
- 
+rootProject.name = "CoreUIModule"
+include(":core-ui")
+include(":core-ui:sample")
