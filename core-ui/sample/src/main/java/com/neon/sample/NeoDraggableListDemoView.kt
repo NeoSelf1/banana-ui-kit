@@ -5,24 +5,20 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -43,29 +39,22 @@ import com.neon.core.ui.theme.NeoFont
 import com.neon.core.ui.theme.Primary10
 import com.neon.core.ui.theme.Primary50
 import com.neon.sample.component.DemoItem
+import com.neon.sample.component.NeoDraggableListLegacy
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NeoDraggableListDemoView() {
-    var items by remember { mutableStateOf(generateDemoItems()) }
+    var legacyItems by remember { mutableStateOf(generateDemoItems()) }
+    var newItems by remember { mutableStateOf(generateDemoItems()) }
     var isEditMode by remember { mutableStateOf(true) }
-    var reorderCount by remember { mutableIntStateOf(0) }
-    var lastTappedItem by remember { mutableStateOf<DemoItem?>(null) }
-
-    val scrollState = rememberScrollState()
+    var legacyReorderCount by remember { mutableIntStateOf(0) }
+    var newReorderCount by remember { mutableIntStateOf(0) }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
-                    Column {
-                        Text("NeoDraggableList Demo", style = NeoFont.subhead3)
-                        Text(
-                            text = "Reorders: $reorderCount",
-                            style = NeoFont.body4,
-                            color = Gray50
-                        )
-                    }
+                    Text("DraggableList Comparison", style = NeoFont.subhead3)
                 },
                 actions = {
                     Text(
@@ -80,98 +69,121 @@ fun NeoDraggableListDemoView() {
                 }
             )
         },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    val newId = (items.maxOfOrNull { it.id } ?: 0) + 1
-                    items = items + DemoItem(
-                        id = newId,
-                        title = "New Item $newId",
-                        subtitle = "Added dynamically"
-                    )
-                }
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Add item")
-            }
-        }
     ) { paddingValues ->
 
-        NeoDraggableList(
-            items = items,
-            rowHeight = 80.dp,
-            isDragEnabled = isEditMode,
-            onReorder = { item, targetIndex ->
-                val currentIndex = items.indexOfFirst { it.id == item.id }
-                if (currentIndex != -1 && currentIndex != targetIndex) {
-                    val mutableList = items.toMutableList()
-                    val movedItem = mutableList.removeAt(currentIndex)
-                    mutableList.add(targetIndex, movedItem)
-                    items = mutableList
-                    reorderCount++
-                }
-            },
-            onTapRow = { item ->
-                lastTappedItem = item
-            },
-            itemContent = { item, isDragging ->
-                DemoItemRowContent(
-                    item = item,
-                    isDragging = isDragging,
-                    isEditMode = isEditMode
-                )
-            },
-            header = {
-                DemoHeader(itemCount = items.size)
-            },
-            footer = {
-                DemoFooter(
-                    onClearAll = { items = emptyList() },
-                    onReset = { items = generateDemoItems() }
-                )
-            },
-            modifier = Modifier
+        Row(
+            Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-        )
+        ) {
+            // Left: Legacy (useItemKey = true)
+            Column(Modifier.weight(1f)) {
+                ListLabel(
+                    title = "Legacy",
+                    subtitle = "useItemKey=true",
+                    reorderCount = legacyReorderCount
+                )
+                NeoDraggableListLegacy(
+                    items = legacyItems,
+                    rowHeight = 64.dp,
+                    isDragEnabled = isEditMode,
+                    useItemKey = true,
+                    onReorder = { item, targetIndex ->
+                        val currentIndex = legacyItems.indexOfFirst { it.id == item.id }
+                        if (currentIndex != -1 && currentIndex != targetIndex) {
+                            val list = legacyItems.toMutableList()
+                            list.add(targetIndex, list.removeAt(currentIndex))
+                            legacyItems = list
+                            legacyReorderCount++
+                        }
+                    },
+                    onTapRow = {},
+                    itemContent = { item, isDragging ->
+                        CompactItemRow(item = item as DemoItem, isDragging = isDragging, isEditMode = isEditMode)
+                    },
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+
+            VerticalDivider(Modifier.fillMaxHeight().width(1.dp))
+
+            // Right: New (core-ui)
+            Column(Modifier.weight(1f)) {
+                ListLabel(
+                    title = "New",
+                    subtitle = "rememberUpdatedState",
+                    reorderCount = newReorderCount
+                )
+                NeoDraggableList(
+                    items = newItems,
+                    rowHeight = 64.dp,
+                    isDragEnabled = isEditMode,
+                    onReorder = { item, targetIndex ->
+                        val currentIndex = newItems.indexOfFirst { it.id == item.id }
+                        if (currentIndex != -1 && currentIndex != targetIndex) {
+                            val list = newItems.toMutableList()
+                            list.add(targetIndex, list.removeAt(currentIndex))
+                            newItems = list
+                            newReorderCount++
+                        }
+                    },
+                    onTapRow = {},
+                    itemContent = { item, isDragging ->
+                        CompactItemRow(item = item, isDragging = isDragging, isEditMode = isEditMode)
+                    },
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+        }
     }
 }
 
 @Composable
-private fun DemoItemRowContent(
+private fun ListLabel(title: String, subtitle: String, reorderCount: Int) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .background(Gray20)
+            .padding(horizontal = 12.dp, vertical = 8.dp)
+    ) {
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(title, style = NeoFont.subhead5, color = Gray80)
+            Text("$reorderCount", style = NeoFont.body2, color = Primary50)
+        }
+        Text(subtitle, style = NeoFont.body6, color = Gray50)
+    }
+}
+
+@Composable
+private fun CompactItemRow(
     item: DemoItem,
     isDragging: Boolean,
     isEditMode: Boolean,
 ) {
     Row(
+        modifier = Modifier.padding(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Box(
             modifier = Modifier
-                .size(48.dp)
+                .size(36.dp)
                 .clip(CircleShape)
                 .background(Primary10),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = item.iconLetter,
-                style = NeoFont.subhead3,
-                color = Gray10
-            )
+            Text(item.iconLetter, style = NeoFont.body1, color = Gray10)
         }
 
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.Center
-        ) {
-            Text(
-                text = item.title,
-                style = NeoFont.subhead5,
-                color = Gray80
-            )
+        Column(Modifier.weight(1f)) {
+            Text(item.title, style = NeoFont.body1, color = Gray80)
             Text(
                 text = if (isDragging) "Dragging..." else item.subtitle,
-                style = NeoFont.body4,
+                style = NeoFont.body6,
                 color = if (isDragging) Primary50 else Gray50
             )
         }
@@ -183,51 +195,9 @@ private fun DemoItemRowContent(
                 ),
                 contentDescription = "Drag handle",
                 tint = if (isDragging) Primary50 else Gray50,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(20.dp)
             )
         }
-    }
-}
-
-@Composable
-private fun DemoHeader(itemCount: Int) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Gray20)
-            .padding(16.dp)
-    ) {
-        Text(
-            text = "Total Items: $itemCount",
-            style = NeoFont.subhead5,
-            color = Gray50
-        )
-    }
-}
-
-@Composable
-private fun DemoFooter(
-    onClearAll: () -> Unit,
-    onReset: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Spacer(modifier = Modifier.height(16.dp))
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Button(onClick = onClearAll) {
-                Text("Clear All")
-            }
-            Button(onClick = onReset) {
-                Text("Reset")
-            }
-        }
-        Spacer(modifier = Modifier.height(32.dp))
     }
 }
 
