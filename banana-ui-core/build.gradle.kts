@@ -38,7 +38,7 @@ mavenPublishing {
 
     pom {
         name.set("banana-ui-kit") // Project Name
-        description.set("lightweight Android UI library that provides polished, iOS-style components.") // Project Description
+        description.set("Lightweight Android UI library that provides polished, iOS-style components.") // Project Description
         inceptionYear.set("2026") // 개시년도
         url.set("https://github.com/NeoSelf1/banana-ui-kit") // Project URL
 

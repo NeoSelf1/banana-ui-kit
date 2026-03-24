@@ -19,6 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "CoreUIModule"
-include(":core-ui")
-include(":core-ui:sample")
+rootProject.name = "banana-ui-kit"
+include(":banana-ui-core")
+include(":banana-ui-core:sample")

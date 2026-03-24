@@ -1,4 +1,4 @@
-# CoreUIModule
+# BananaUIKit
 
 Android Jetpack Compose 기반의 재사용 가능한 UI 컴포넌트 라이브러리입니다.
 
