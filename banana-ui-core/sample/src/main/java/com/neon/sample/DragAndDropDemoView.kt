@@ -28,7 +28,7 @@ import com.neon.core.ui.component.list.NeoDraggableList
 import com.neon.core.ui.theme.Gray10
 import com.neon.core.ui.theme.Gray50
 import com.neon.core.ui.theme.Gray80
-import com.neon.core.ui.theme.NeoFont
+import com.neon.core.ui.theme.BananaDesign
 import com.neon.core.ui.theme.Primary10
 import com.neon.sample.component.DemoItem
 import com.neon.sample.component.generateSampleItems
@@ -84,7 +84,7 @@ fun DemoItemRowContent(
         ) {
             Text(
                 text = item.iconLetter,
-                style = NeoFont.subhead3,
+                style = BananaDesign.typography.subhead3,
                 color = Gray10
             )
         }
@@ -97,12 +97,12 @@ fun DemoItemRowContent(
         ) {
             Text(
                 text = item.title,
-                style = NeoFont.subhead5,
+                style = BananaDesign.typography.subhead5,
                 color = Gray80
             )
             Text(
                 text = item.subtitle,
-                style = NeoFont.body4,
+                style = BananaDesign.typography.body4,
                 color = Gray50
             )
         }

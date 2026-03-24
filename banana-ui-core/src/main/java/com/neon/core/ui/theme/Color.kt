@@ -47,3 +47,19 @@ val SurfaceHigh = Color(0xDE000000)      // 87% alpha black
 // System Colors - iOS 에셋과 동기화
 val Warning = Color(0xFFF92642)  // R:0.976 G:0.149 B:0.259
 val Caution = Color(0xFFFF9C19)  // R:1.000 G:0.612 B:0.098
+
+// Dark Theme - Background Colors (SEGYM_CR 다크 테마용)
+val DarkBackground90 = Color(0xFF0A0A0F)  // 최심부 배경 (SEGYM BackgroundDarkest)
+val DarkBackground80 = Color(0xFF1A1A24)  // 다크 네이비 배경/카드 (SEGYM BackgroundDarkNavy, Primary90)
+val DarkBackground70 = Color(0xFF121218)  // 다크 그레이 배경 (SEGYM GrayDarkest)
+
+// Dark Theme - Primary Colors (SEGYM_CR 퍼플 액센트 계열)
+val DarkPrimary50 = Color(0xFF5B14FF)  // 포인트 퍼플 (SEGYM PointPurple)
+val DarkPrimary40 = Color(0xFF7D45FF)  // 라이트 퍼플 (SEGYM 그라디언트용)
+
+// Dark Theme - Secondary Colors (SEGYM_CR 그린 액센트 계열)
+val DarkSecondary50 = Color(0xFF3DD34C)  // 포인트 그린 (SEGYM PointGreen)
+
+// Dark Theme - System Colors (SEGYM_CR 시스템 컬러)
+val DarkWarning = Color(0xFFDC2626)  // 에러/정지 (SEGYM PointRed)
+val DarkCaution = Color(0xFFFFC864)  // 경고/주의 (SEGYM PointOrange)

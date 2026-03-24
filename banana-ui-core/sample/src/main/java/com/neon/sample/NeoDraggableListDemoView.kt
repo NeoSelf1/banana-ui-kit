@@ -35,7 +35,7 @@ import com.neon.core.ui.theme.Gray10
 import com.neon.core.ui.theme.Gray20
 import com.neon.core.ui.theme.Gray50
 import com.neon.core.ui.theme.Gray80
-import com.neon.core.ui.theme.NeoFont
+import com.neon.core.ui.theme.BananaDesign
 import com.neon.core.ui.theme.Primary10
 import com.neon.core.ui.theme.Primary50
 import com.neon.sample.component.DemoItem
@@ -54,12 +54,12 @@ fun NeoDraggableListDemoView() {
         topBar = {
             TopAppBar(
                 title = {
-                    Text("DraggableList Comparison", style = NeoFont.subhead3)
+                    Text("DraggableList Comparison", style = BananaDesign.typography.subhead3)
                 },
                 actions = {
                     Text(
                         text = if (isEditMode) "Edit" else "View",
-                        style = NeoFont.body2,
+                        style = BananaDesign.typography.body2,
                         modifier = Modifier.padding(end = 8.dp)
                     )
                     Switch(
@@ -151,10 +151,10 @@ private fun ListLabel(title: String, subtitle: String, reorderCount: Int) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(title, style = NeoFont.subhead5, color = Gray80)
-            Text("$reorderCount", style = NeoFont.body2, color = Primary50)
+            Text(title, style = BananaDesign.typography.subhead5, color = Gray80)
+            Text("$reorderCount", style = BananaDesign.typography.body2, color = Primary50)
         }
-        Text(subtitle, style = NeoFont.body6, color = Gray50)
+        Text(subtitle, style = BananaDesign.typography.body6, color = Gray50)
     }
 }
 
@@ -176,14 +176,14 @@ private fun CompactItemRow(
                 .background(Primary10),
             contentAlignment = Alignment.Center
         ) {
-            Text(item.iconLetter, style = NeoFont.body1, color = Gray10)
+            Text(item.iconLetter, style = BananaDesign.typography.body1, color = Gray10)
         }
 
         Column(Modifier.weight(1f)) {
-            Text(item.title, style = NeoFont.body1, color = Gray80)
+            Text(item.title, style = BananaDesign.typography.body1, color = Gray80)
             Text(
                 text = if (isDragging) "Dragging..." else item.subtitle,
-                style = NeoFont.body6,
+                style = BananaDesign.typography.body6,
                 color = if (isDragging) Primary50 else Gray50
             )
         }

@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.dp
 import com.neon.core.ui.theme.Gray10
 import com.neon.core.ui.theme.Gray25
 import com.neon.core.ui.theme.Gray70
-import com.neon.core.ui.theme.NeoFont
+import com.neon.core.ui.theme.BananaDesign
 import com.neon.core.ui.theme.Primary50
 
 /**
@@ -75,7 +75,7 @@ fun NeoKeyboardButton(
             .clickable(enabled = !isDisabled && !isLoading) { onTap() },
         contentAlignment = Alignment.Center
     ) {
-        Text(text, Modifier.alpha(textAlpha), style = NeoFont.subhead4, color = textColor)
+        Text(text, Modifier.alpha(textAlpha), style = BananaDesign.typography.subhead4, color = textColor)
         
         if (isLoading) {
             CircularProgressIndicator(

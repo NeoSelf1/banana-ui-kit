@@ -38,7 +38,7 @@ import com.neon.core.ui.theme.Gray40
 import com.neon.core.ui.theme.Gray60
 import com.neon.core.ui.theme.Gray80
 import com.neon.core.ui.theme.NeoAnimations
-import com.neon.core.ui.theme.NeoFont
+import com.neon.core.ui.theme.BananaDesign
 import com.neon.core.ui.theme.Primary50
 
 /**
@@ -122,7 +122,7 @@ fun NeoTextField(
         contentAlignment = Alignment.CenterEnd
     ) {
         if (value.isEmpty()) {
-            Text(placeholder, Modifier.align(Alignment.CenterStart), style = NeoFont.subhead6, color = Gray40)
+            Text(placeholder, Modifier.align(Alignment.CenterStart), style = BananaDesign.typography.subhead6, color = Gray40)
         }
 
         BasicTextField(
@@ -134,7 +134,7 @@ fun NeoTextField(
                 }
             },
             singleLine = true,
-            textStyle = NeoFont.subhead6,
+            textStyle = BananaDesign.typography.subhead6,
             keyboardOptions = keyboardOptions,
             keyboardActions = keyboardActions,
             visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,

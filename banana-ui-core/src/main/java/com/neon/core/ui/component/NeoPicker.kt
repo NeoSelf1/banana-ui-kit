@@ -25,6 +25,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.Black
 import androidx.compose.ui.graphics.Color.Companion.Gray
 import androidx.compose.ui.graphics.Color.Companion.Transparent
@@ -35,8 +36,8 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.neon.core.ui.theme.Gray20
 import kotlinx.coroutines.launch
 
 /**
@@ -44,7 +45,7 @@ import kotlinx.coroutines.launch
  *
  * LazyColumn 기반의 스냅 스크롤로 구현되어, 사용자가 스크롤하면 가장 가까운 아이템에
  * 자동으로 스냅됩니다. 상하 가장자리에는 페이드 그라데이션이 적용되고,
- * 선택된 아이템 영역에는 [Gray20] 배경의 하이라이트가 표시됩니다.
+ * 선택된 아이템 영역에는 [highlightColor] 배경의 하이라이트가 표시됩니다.
  *
  * [content] 람다를 통해 각 아이템의 렌더링 방식을 커스터마이징할 수 있으며,
  * 선택 여부(Boolean)가 두 번째 파라미터로 전달됩니다.
@@ -55,6 +56,9 @@ import kotlinx.coroutines.launch
  * @param modifier 피커에 적용할 Modifier.
  * @param items 피커에 표시할 문자열 아이템 목록.
  * @param initialItem 초기 선택 아이템. items 목록에 포함되어야 합니다.
+ * @param itemHeight 각 아이템의 높이. 기본값은 36.dp.
+ * @param highlightColor 선택된 아이템 영역의 하이라이트 배경색. 기본값은 반투명 Gray.
+ * @param highlightBlendMode 하이라이트에 적용할 BlendMode. 기본값은 [BlendMode.Multiply].
  * @param onItemSelected 아이템 선택 시 호출되는 콜백. (인덱스, 값) 쌍이 전달됩니다.
  * @param content 각 아이템을 렌더링하는 컴포저블. (아이템 문자열, 선택 여부)가 전달됩니다.
  */
@@ -63,6 +67,9 @@ fun NeoPicker(
     modifier: Modifier = Modifier,
     items: List<String>,
     initialItem: String,
+    itemHeight: Dp = 36.dp,
+    highlightColor: Color = Gray.copy(alpha = 0.2f),
+    highlightBlendMode: BlendMode = BlendMode.Multiply,
     onItemSelected: (Int, String) -> Unit = { _, _ -> },
     content: @Composable ((String, Boolean) -> Unit)
 ) {
@@ -71,7 +78,6 @@ fun NeoPicker(
     var lastSelectedIndex by remember { mutableStateOf(0) }
     val coroutineScope = rememberCoroutineScope()
 
-    val itemHeight = 36.dp
     val itemHeightPx = with(density) { itemHeight.toPx() }
 
     BoxWithConstraints(
@@ -94,9 +100,9 @@ fun NeoPicker(
                 )
 
                 drawRoundRect(
-                    color = Gray.copy(alpha = 0.2f),
+                    color = highlightColor,
                     cornerRadius = CornerRadius(8.dp.toPx()),
-                    blendMode = BlendMode.Multiply,
+                    blendMode = highlightBlendMode,
                     topLeft = Offset(0f, rectTop),
                     size = Size(size.width, itemHeightPx)
                 )

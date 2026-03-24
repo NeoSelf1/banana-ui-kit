@@ -13,7 +13,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.min
 import com.neon.core.ui.theme.Gray50
-import com.neon.core.ui.theme.NeoFont
+import com.neon.core.ui.theme.BananaDesign
 
 /**
  * 데이터가 없을 때 표시되는 빈 상태 플레이스홀더 컴포넌트.
@@ -44,6 +44,6 @@ fun NeoPlaceholder(
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        Text(text, modifier.padding(top = dynamicTopPadding), style = NeoFont.subhead6, color = Gray50, textAlign = TextAlign.Center)
+        Text(text, modifier.padding(top = dynamicTopPadding), style = BananaDesign.typography.subhead6, color = Gray50, textAlign = TextAlign.Center)
     }
 }

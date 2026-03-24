@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.dp
 import com.neon.core.ui.component.NeoPicker
 import com.neon.core.ui.theme.Gray50
 import com.neon.core.ui.theme.Gray80
-import com.neon.core.ui.theme.NeoFont
+import com.neon.core.ui.theme.BananaDesign
 
 private val PICKER_ITEMS = (1..30).map { it.toString() }
 
@@ -38,7 +38,7 @@ fun NeoPickerDemoView() {
     ) {
         Text(
             text = "NeoPicker Demo",
-            style = NeoFont.headline3,
+            style = BananaDesign.typography.headline3,
             modifier = Modifier.testTag("picker_title")
         )
 
@@ -46,7 +46,7 @@ fun NeoPickerDemoView() {
 
         Text(
             text = "선택: $selectedValue",
-            style = NeoFont.subhead1,
+            style = BananaDesign.typography.subhead1,
             modifier = Modifier.testTag("selected_value")
         )
 
@@ -54,7 +54,7 @@ fun NeoPickerDemoView() {
 
         Text(
             text = "선택 변경 횟수: $selectionCount",
-            style = NeoFont.body2,
+            style = BananaDesign.typography.body2,
             color = Gray50,
             modifier = Modifier.testTag("selection_count")
         )
@@ -90,7 +90,7 @@ fun NeoPickerDemoView() {
 private fun PickerItemContent(text: String, isSelected: Boolean) {
     Text(
         text = text,
-        style = if (isSelected) NeoFont.subhead3 else NeoFont.body2,
+        style = if (isSelected) BananaDesign.typography.subhead3 else BananaDesign.typography.body2,
         color = if (isSelected) Gray80 else Gray50,
         textAlign = TextAlign.Center,
         modifier = Modifier.testTag("picker_item_$text")
