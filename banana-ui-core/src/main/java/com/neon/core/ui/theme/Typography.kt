@@ -15,6 +15,17 @@ val Pretendard = FontFamily(
     Font(R.font.pretendard_bold, FontWeight.Bold)
 )
 
+val Esamanru = FontFamily(
+    Font(R.font.esamanru_bold, FontWeight.Bold)
+)
+
+val LogoTextStyle = TextStyle(
+    fontFamily = Esamanru,
+    fontWeight = FontWeight.Bold,
+    fontSize = 28.sp,
+    letterSpacing = (-0.45).sp
+)
+
 object NeoFont {
     // Display - 태블릿/대형 디스플레이용
     val display1 = TextStyle(fontFamily = Pretendard, fontWeight = FontWeight.Bold, fontSize = 128.sp)
