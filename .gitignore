@@ -15,3 +15,5 @@ captures
 
 # Claude Code Skills 파일
 .claude/skills
+
+gradle.properties
