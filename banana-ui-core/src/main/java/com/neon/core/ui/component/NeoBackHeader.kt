@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.dp
 import com.neon.core.ui.theme.Gray10
 import com.neon.core.ui.theme.Gray25
 import com.neon.core.ui.theme.Gray80
-import com.neon.core.ui.theme.BananaDesign
+import com.neon.core.ui.theme.NeoFont
 import com.neon.core.ui.theme.Primary50
 
 /**
@@ -92,7 +92,7 @@ fun NeoBackHeader(
                     }
                 }
 
-                Text(headerType.title, Modifier.fillMaxWidth(), style = BananaDesign.typography.subhead5, color = Gray80, textAlign = TextAlign.Center)
+                Text(headerType.title, Modifier.fillMaxWidth(), style = NeoFont.subhead5, color = Gray80, textAlign = TextAlign.Center)
             }
         }
 

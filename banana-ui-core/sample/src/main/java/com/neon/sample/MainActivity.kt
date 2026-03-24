@@ -28,7 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.neon.core.ui.theme.Gray10
-import com.neon.core.ui.theme.BananaDesign
+import com.neon.core.ui.theme.NeoFont
 import com.neon.core.ui.theme.Primary50
 
 enum class DemoRoute(val title: String) {
@@ -80,7 +80,7 @@ private fun DemoList(onNavigate: (DemoRoute) -> Unit) {
     ) {
         Text(
             text = "Core UI Samples",
-            style = BananaDesign.typography.headline2,
+            style = NeoFont.headline2,
             modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
         )
         HorizontalDivider()
@@ -97,11 +97,11 @@ private fun DemoList(onNavigate: (DemoRoute) -> Unit) {
                 ) {
                     Text(
                         text = route.title,
-                        style = BananaDesign.typography.subhead4
+                        style = NeoFont.subhead4
                     )
                     Text(
                         text = "›",
-                        style = BananaDesign.typography.subhead4,
+                        style = NeoFont.subhead4,
                         color = Primary50
                     )
                 }

@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.dp
 import com.neon.core.ui.theme.Gray15
 import com.neon.core.ui.theme.Gray45
 import com.neon.core.ui.theme.Gray80
-import com.neon.core.ui.theme.BananaDesign
+import com.neon.core.ui.theme.NeoFont
 
 /**
  * 검색 전용 텍스트 입력 필드 컴포넌트.
@@ -78,7 +78,7 @@ fun NeoSearchTextField(
         contentAlignment = Alignment.CenterStart
     ) {
         if (value.isEmpty()) {
-            Text(placeholder, style = BananaDesign.typography.body2, color = Gray45)
+            Text(placeholder, style = NeoFont.body2, color = Gray45)
         }
 
         BasicTextField(
@@ -87,7 +87,7 @@ fun NeoSearchTextField(
                 textFieldValue = newValue
                 onValueChange(newValue.text)
             },
-            textStyle = BananaDesign.typography.subhead6.copy(color = Gray80),
+            textStyle = NeoFont.subhead6.copy(color = Gray80),
             singleLine = true,
             modifier = textFieldModifier.fillMaxWidth()
         )

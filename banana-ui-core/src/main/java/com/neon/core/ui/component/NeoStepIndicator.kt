@@ -29,7 +29,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.neon.core.ui.theme.BananaDesign
+import com.neon.core.ui.theme.NeoFont
 import com.neon.core.ui.theme.Gray50
 import com.neon.core.ui.theme.Gray80
 import com.neon.core.ui.theme.Primary50
@@ -64,7 +64,7 @@ fun NeoStepIndicator(
     circleSize: Dp = 32.dp,
     connectorWidth: Dp = 16.dp,
 ) {
-    val typography = BananaDesign.typography
+    val typography = NeoFont
 
     Row(
         verticalAlignment = Alignment.Top,

@@ -30,7 +30,7 @@ import androidx.compose.ui.unit.dp
 import com.neon.core.ui.component.button.NeoClickable
 import com.neon.core.ui.theme.Gray50
 import com.neon.core.ui.theme.Gray80
-import com.neon.core.ui.theme.BananaDesign
+import com.neon.core.ui.theme.NeoFont
 import com.neon.core.ui.theme.Primary10
 import com.neon.core.ui.theme.Primary50
 import com.neon.sample.component.NeoButtonLegacy
@@ -58,7 +58,7 @@ fun NeoButtonComparisonDemoView() {
             ) {
                 Text(
                     text = "Button Performance Test",
-                    style = BananaDesign.typography.headline3,
+                    style = NeoFont.headline3,
                 )
                 Spacer(Modifier.height(32.dp))
                 Button(
@@ -77,7 +77,7 @@ fun NeoButtonComparisonDemoView() {
                 Spacer(Modifier.height(24.dp))
                 Text(
                     text = "Single Button (LongClick Test)",
-                    style = BananaDesign.typography.subhead3,
+                    style = NeoFont.subhead3,
                 )
                 Spacer(Modifier.height(12.dp))
                 Row(
@@ -219,7 +219,7 @@ private fun ButtonItemContent(index: Int, transitionTypeName: String) {
         ) {
             Text(
                 text = "${index + 1}",
-                style = BananaDesign.typography.subhead5,
+                style = NeoFont.subhead5,
                 color = Primary50
             )
         }
@@ -227,12 +227,12 @@ private fun ButtonItemContent(index: Int, transitionTypeName: String) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = "Button ${index + 1}",
-                style = BananaDesign.typography.subhead5,
+                style = NeoFont.subhead5,
                 color = Gray80
             )
             Text(
                 text = transitionTypeName,
-                style = BananaDesign.typography.body4,
+                style = NeoFont.body4,
                 color = Gray50
             )
         }
