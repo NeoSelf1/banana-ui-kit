@@ -1,7 +1,5 @@
 # BananaUIKit
-
 Android Jetpack Compose 기반의 재사용 가능한 UI 컴포넌트 라이브러리입니다.
-Humania-mobile과 SEGYM_CR-mobile의 공통 UI 인프라를 제공합니다.
 
 ## Tech Stack
 
@@ -94,24 +92,6 @@ banana-ui-kit/
 | `dropShadow` | blur, spread, offset 커스텀 그림자 Modifier |
 | `SvgImageLoader` | Coil SVG 싱글톤 이미지 로더 |
 
-## 테마
-
-### BananaTheme
-
-오버스크롤 방지를 제공하는 테마 래퍼. 앱의 최상위에서 감싸서 사용합니다.
-
-```kotlin
-// Humania-mobile
-fun HumaniaTheme(content: @Composable () -> Unit) {
-    BananaTheme(content = content)
-}
-
-// SEGYM_CR-mobile
-fun SEGYMCRTheme(content: @Composable () -> Unit) {
-    BananaTheme(content = content)
-}
-```
-
 ### Typography — `NeoFont`
 
 Pretendard (Regular, Medium, SemiBold, Bold) + Esamanru (Bold) 폰트 기반 싱글톤 타이포그래피:
@@ -132,9 +112,6 @@ Text("로고", style = LogoTextStyle)
 ```
 
 ### Color
-
-iOS 에셋과 동기화된 컬러 시스템:
-
 | 그룹 | 범위 |
 |---|---|
 | **Primary** | Primary05 ~ Primary90 (퍼플 계열) |
@@ -155,7 +132,6 @@ Text("텍스트", color = DarkPrimary50)
 ```
 
 ### Animation — `NeoAnimations`
-
 - **Tween**: Fast (100ms), MediumFast (200ms), Medium (300ms)
 - **Spring**: FastSpringFloat, MediumSpringFloat
 
